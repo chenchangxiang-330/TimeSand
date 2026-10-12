@@ -29,10 +29,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Show Dart formatter diff
-        run: |
-          dart format lib test
-          git diff --no-ext-diff --unified=3 -- lib test
+      - name: Check Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Static analysis
         run: flutter analyze
@@ -58,7 +56,9 @@ jobs:
         run: flutter pub get
 
       - name: Ensure Android host scaffold
-        run: flutter create --platforms=android --project-name timesand --org com.timesand --no-pub .
+        run: |
+          rm -rf android
+          flutter create --platforms=android --project-name timesand --org com.timesand --no-pub .
 
       - name: Build development APK
         run: flutter build apk --debug
@@ -88,7 +88,9 @@ jobs:
         run: flutter pub get
 
       - name: Ensure macOS host scaffold
-        run: flutter create --platforms=macos --project-name timesand --org com.timesand --no-pub .
+        run: |
+          rm -rf macos
+          flutter create --platforms=macos --project-name timesand --org com.timesand --no-pub .
 
       - name: Build unsigned development app
         run: flutter build macos --debug
