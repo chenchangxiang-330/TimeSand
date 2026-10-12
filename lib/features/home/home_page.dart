@@ -459,7 +459,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               onPressed: () {
                 final name = controller.text.trim();
                 if (name.isNotEmpty) {
-                  Navigator.pop(dialogContext, (name, selectedColor.toARGB32()));
+                  Navigator.pop(dialogContext, (
+                    name,
+                    selectedColor.toARGB32(),
+                  ));
                 }
               },
               child: const Text('保存'),
