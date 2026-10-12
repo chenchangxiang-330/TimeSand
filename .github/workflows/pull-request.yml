@@ -29,8 +29,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Show Dart formatter diff
+        run: |
+          dart format lib test
+          git diff --no-ext-diff --unified=3 -- lib test
 
       - name: Static analysis
         run: flutter analyze
