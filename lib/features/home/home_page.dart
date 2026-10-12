@@ -598,14 +598,14 @@ class _BottleCard extends StatelessWidget {
                 IconButton(
                   key: const ValueKey('bottle-stop-button'),
                   tooltip: '停止计时',
-                  onPressed: onStop,
+                  onPressed: () => onStop(),
                   icon: const Icon(Icons.stop_circle_outlined),
                 )
               else
                 IconButton(
                   key: ValueKey('start-' + bottle.id.toString()),
                   tooltip: '开始计时',
-                  onPressed: onStart,
+                  onPressed: () => onStart(),
                   icon: const Icon(Icons.play_circle_outline),
                 ),
               PopupMenuButton<String>(
