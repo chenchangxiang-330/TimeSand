@@ -270,7 +270,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget _buildActiveCard(BuildContext context) {
     final active = _activeEntry;
     if (active == null) {
-      return Card(
+      return const Card(
         child: ListTile(
           leading: const Icon(Icons.play_circle_outline),
           title: const Text('没有正在进行的计时'),
@@ -441,7 +441,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       onTap: () => setDialogState(() => selectedColor = color),
                       child: CircleAvatar(
                         backgroundColor: color,
-                        child: selectedColor.value == color.value
+                        child: selectedColor.toARGB32() == color.toARGB32()
                             ? const Icon(Icons.check)
                             : null,
                       ),
@@ -459,7 +459,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               onPressed: () {
                 final name = controller.text.trim();
                 if (name.isNotEmpty) {
-                  Navigator.pop(dialogContext, (name, selectedColor.value));
+                  Navigator.pop(dialogContext, (name, selectedColor.toARGB32()));
                 }
               },
               child: const Text('保存'),
