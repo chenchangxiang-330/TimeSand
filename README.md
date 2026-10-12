@@ -22,12 +22,12 @@ Phase 1 建立跨平台 Flutter 工程基础，当前首页实时展示：
 
 ## 技术栈与版本
 
-- Flutter stable channel（由 GitHub Actions 解析；工作流日志打印实际版本）
-- Dart（随 Flutter SDK 提供；工作流日志打印实际版本）
+- Flutter 3.47.7（stable，GitHub Actions 实际解析版本）
+- Dart 3.13.5（随 Flutter 3.47.7 提供）
 - Android 与 macOS 共用 Dart 业务代码
 - 当前无第三方运行时依赖；仅使用 Flutter SDK 与 Dart 标准库
 
-每次 CI 运行都会首先输出 flutter --version 和 dart --version。仓库不猜测本地未安装的 SDK 版本；首次成功的云端运行完成后，应将日志中的确切版本回填到本节。
+PR 工作流会打印完整的 Flutter、Dart 和 runner 信息，后续升级 stable channel 时以 CI 日志为准。
 
 ## 支持平台
 
@@ -54,8 +54,8 @@ lib/
   features/hourglass/          沙漏占位组件
 test/
   core/time/                   时间计算单元测试
-android/                       Android 宿主工程
-macos/                         macOS 宿主工程
+android/                       Android 宿主工程与包名说明
+macos/                         macOS 宿主工程与 Bundle ID 说明
 .github/workflows/
   pull-request.yml             PR 格式、分析、测试和平台构建
   build.yml                    手动触发的 Android/macOS 构建
@@ -65,14 +65,14 @@ macos/                         macOS 宿主工程
 
 ## 开发
 
-需要 Flutter stable SDK。进入项目根目录后执行：
+需要 Flutter 3.47.7 或兼容的 stable SDK。进入项目根目录后执行：
 
 ~~~sh
 flutter pub get
 flutter run -d <device-id>
 ~~~
 
-Android 与 macOS 使用相同的 lib/ 代码。平台宿主文件由 Flutter 标准工程生成并保留在对应平台目录中。
+Android 与 macOS 使用相同的 lib/ 代码。云端构建会先用当前 stable SDK 重新生成对应宿主目录，再进行 debug 构建，以避免宿主模板与 SDK 不匹配。
 
 ## 测试与质量检查
 
