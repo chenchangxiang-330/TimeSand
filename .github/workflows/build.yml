@@ -1,0 +1,76 @@
+name: Manual development builds
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Print Flutter and Dart versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Ensure Android host scaffold
+        run: flutter create --platforms=android --project-name timesand --org com.timesand --no-pub .
+
+      - name: Build development APK
+        run: flutter build apk --debug
+
+      - name: Upload development APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: timesand-android-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 3
+
+  macos:
+    name: macOS debug app
+    runs-on: macos-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Print Flutter and Dart versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Ensure macOS host scaffold
+        run: flutter create --platforms=macos --project-name timesand --org com.timesand --no-pub .
+
+      - name: Build unsigned development app
+        run: flutter build macos --debug
+
+      - name: Upload development app
+        uses: actions/upload-artifact@v4
+        with:
+          name: timesand-macos-debug
+          path: build/macos/Build/Products/Debug/TimeSand.app
+          retention-days: 3
