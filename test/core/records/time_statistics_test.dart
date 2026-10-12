@@ -101,7 +101,7 @@ void main() {
       ],
     );
 
-    expect(stats.total, const Duration(hours: 2, minutes: 1));
+    expect(stats.total, const Duration(hours: 3));
     expect(stats.entryCount, 2);
     expect(stats.byMonth['2026-09'], const Duration(hours: 1));
     expect(stats.byMonth['2026-10'], const Duration(hours: 2));
