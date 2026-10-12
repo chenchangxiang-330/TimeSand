@@ -36,9 +36,7 @@ abstract final class AppTheme {
         color: Colors.white.withValues(alpha: 0.72),
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
     );
   }

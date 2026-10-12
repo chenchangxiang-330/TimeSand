@@ -62,8 +62,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 children: [
                   Text('TimeSand', style: theme.textTheme.displaySmall),
                   const SizedBox(height: 8),
-                  Text('时间终将流逝，但你可以决定它流向哪里。',
-                      style: theme.textTheme.bodyLarge),
+                  Text('时间终将流逝，但你可以决定它流向哪里。', style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 4),
                   Text(
                     'Time will pass, but you decide where it flows.',
