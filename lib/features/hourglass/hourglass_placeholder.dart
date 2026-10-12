@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HourglassPlaceholder extends StatelessWidget {
-  const HourglassPlaceholder({
-    required this.progress,
-    super.key,
-  });
+  const HourglassPlaceholder({required this.progress, super.key});
 
   final double progress;
 
@@ -15,10 +12,7 @@ class HourglassPlaceholder extends StatelessWidget {
       value: '${(progress * 100).round()} percent of the day elapsed',
       child: CustomPaint(
         painter: _HourglassPainter(progress: progress),
-        child: const SizedBox(
-          width: 190,
-          height: 250,
-        ),
+        child: const SizedBox(width: 190, height: 250),
       ),
     );
   }
@@ -32,7 +26,7 @@ class _HourglassPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.width / 2;
-    final top = 20.0;
+    const top = 20.0;
     final bottom = size.height - 20.0;
     final neck = size.height / 2;
     final framePaint = Paint()
@@ -75,12 +69,7 @@ class _HourglassPainter extends CustomPainter {
 
     if (lowerHeight > 0) {
       canvas.drawRect(
-        Rect.fromLTWH(
-          center - 2,
-          bottom - 8 - lowerHeight,
-          4,
-          lowerHeight,
-        ),
+        Rect.fromLTWH(center - 2, bottom - 8 - lowerHeight, 4, lowerHeight),
         sandPaint,
       );
     }
@@ -88,12 +77,7 @@ class _HourglassPainter extends CustomPainter {
     final upperHeight = (neck - top - 12) * (1 - clamped);
     if (upperHeight > 0) {
       canvas.drawRect(
-        Rect.fromLTWH(
-          center - 43,
-          top + 7,
-          86,
-          upperHeight,
-        ),
+        Rect.fromLTWH(center - 43, top + 7, 86, upperHeight),
         sandPaint,
       );
     }

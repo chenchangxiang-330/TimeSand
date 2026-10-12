@@ -21,10 +21,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _now = DateTime.now();
-    _ticker = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => _refresh(),
-    );
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _refresh());
   }
 
   @override
@@ -56,25 +53,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 32,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'TimeSand',
-                    style: theme.textTheme.displaySmall,
-                  ),
+                  Text('TimeSand', style: theme.textTheme.displaySmall),
                   const SizedBox(height: 8),
-                  Text(
-                    '时间终将流逝，但你可以决定它流向哪里。',
-                    style: theme.textTheme.bodyLarge,
-                  ),
+                  Text('时间终将流逝，但你可以决定它流向哪里。',
+                      style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 4),
                   Text(
                     'Time will pass, but you decide where it flows.',
@@ -82,21 +71,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                   const SizedBox(height: 32),
                   Center(
-                    child: HourglassPlaceholder(
-                      progress: snapshot.progress,
-                    ),
+                    child: HourglassPlaceholder(progress: snapshot.progress),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    date,
-                    style: theme.textTheme.headlineSmall,
-                  ),
+                  Text(date, style: theme.textTheme.headlineSmall),
                   const SizedBox(height: 16),
                   LinearProgressIndicator(
                     value: snapshot.progress,
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(8),
-                    backgroundColor: Colors.white.withOpacity(0.8),
+                    backgroundColor: Colors.white.withValues(alpha: 0.8),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
@@ -114,7 +98,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       ),
                       _MetricCard(
                         label: '今日进度',
-                        value: '${(snapshot.progress * 100).toStringAsFixed(1)}%',
+                        value:
+                            '${(snapshot.progress * 100).toStringAsFixed(1)}%',
                       ),
                     ],
                   ),
@@ -148,10 +133,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-  });
+  const _MetricCard({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -160,10 +142,7 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 16,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

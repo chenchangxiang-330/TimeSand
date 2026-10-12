@@ -1,8 +1,5 @@
 class DayWindow {
-  const DayWindow({
-    required this.start,
-    required this.end,
-  });
+  const DayWindow({required this.start, required this.end});
 
   final DateTime start;
   final DateTime end;
@@ -62,8 +59,8 @@ class TimeSnapshot {
     final progress = totalMicroseconds == 0
         ? 0.0
         : (elapsed.inMicroseconds / totalMicroseconds)
-            .clamp(0.0, 1.0)
-            .toDouble();
+              .clamp(0.0, 1.0)
+              .toDouble();
     final remaining = window.total - elapsed;
 
     return TimeSnapshot(

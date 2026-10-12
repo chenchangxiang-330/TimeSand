@@ -27,25 +27,13 @@ abstract final class AppTheme {
           fontWeight: FontWeight.w600,
           letterSpacing: -1.2,
         ),
-        headlineSmall: TextStyle(
-          color: _ink,
-          fontWeight: FontWeight.w600,
-        ),
-        bodyLarge: TextStyle(
-          color: _ink,
-          height: 1.5,
-        ),
-        bodyMedium: TextStyle(
-          color: _muted,
-          height: 1.45,
-        ),
-        labelLarge: TextStyle(
-          color: _ink,
-          fontWeight: FontWeight.w600,
-        ),
+        headlineSmall: TextStyle(color: _ink, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(color: _ink, height: 1.5),
+        bodyMedium: TextStyle(color: _muted, height: 1.45),
+        labelLarge: TextStyle(color: _ink, fontWeight: FontWeight.w600),
       ),
-      cardTheme: CardTheme(
-        color: Colors.white.withOpacity(0.72),
+      cardTheme: CardThemeData(
+        color: Colors.white.withValues(alpha: 0.72),
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
