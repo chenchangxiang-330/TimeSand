@@ -40,6 +40,7 @@ void main() {
     expect(find.byKey(startKey), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(startKey));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(startKey));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('stop-timer-button')), findsOneWidget);
