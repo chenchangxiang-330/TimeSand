@@ -41,10 +41,9 @@ abstract final class TimeEntryRules {
 
       final otherEnd = entry.endedAt;
       final overlaps = otherEnd == null
-          ? endedAt == null || startedAt.isBefore(otherEnd)
+          ? endedAt == null || endedAt.isAfter(entry.startedAt)
           : endedAt == null
-              ? startedAt.isBefore(otherEnd) &&
-                  entry.startedAt.isBefore(DateTime.now())
+              ? startedAt.isBefore(otherEnd)
               : startedAt.isBefore(otherEnd) &&
                   endedAt.isAfter(entry.startedAt);
 
