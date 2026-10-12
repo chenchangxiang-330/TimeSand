@@ -30,7 +30,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: HomePage(repository: repository),
+        home: HomePage(repository: repository, enableTicker: false),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));
@@ -52,7 +52,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: HomePage(repository: repository),
+        home: HomePage(repository: repository, enableTicker: false),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));
