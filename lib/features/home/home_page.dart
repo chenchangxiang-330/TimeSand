@@ -117,15 +117,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   String _formatDate(DateTime date) {
-    const weekdays = <String>[
-      '星期一',
-      '星期二',
-      '星期三',
-      '星期四',
-      '星期五',
-      '星期六',
-      '星期日',
-    ];
+    const weekdays = <String>['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
     return '${date.year}年${date.month}月${date.day}日 · '
         '${weekdays[date.weekday - 1]}';
   }
