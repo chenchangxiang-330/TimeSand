@@ -29,7 +29,9 @@ jobs:
         run: flutter pub get
 
       - name: Ensure Android host scaffold
-        run: flutter create --platforms=android --project-name timesand --org com.timesand --no-pub .
+        run: |
+          rm -rf android
+          flutter create --platforms=android --project-name timesand --org com.timesand --no-pub .
 
       - name: Build development APK
         run: flutter build apk --debug
@@ -63,7 +65,9 @@ jobs:
         run: flutter pub get
 
       - name: Ensure macOS host scaffold
-        run: flutter create --platforms=macos --project-name timesand --org com.timesand --no-pub .
+        run: |
+          rm -rf macos
+          flutter create --platforms=macos --project-name timesand --org com.timesand --no-pub .
 
       - name: Build unsigned development app
         run: flutter build macos --debug
