@@ -175,7 +175,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 ),
                                 _MetricCard(
                                   label: '今日进度',
-                                  value: (${(snapshot.progress * 100).toStringAsFixed(1)}%'),
+                                  value: '${(snapshot.progress * 100).toStringAsFixed(1)}%',
                                 ),
                               ],
                             ),
