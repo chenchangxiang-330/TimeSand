@@ -63,7 +63,7 @@ class _HourglassPainter extends CustomPainter {
       framePaint,
     );
 
-    final clamped = progress.clamp(0.0, 1.0);
+    final clamped = progress.clamp(0.0, 1.0).toDouble();
     final lowerHeight = (bottom - neck - 10) * clamped;
     final lower = Path()
       ..moveTo(center - 8, neck + 3)

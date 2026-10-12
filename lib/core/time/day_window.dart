@@ -61,7 +61,9 @@ class TimeSnapshot {
     final totalMicroseconds = window.total.inMicroseconds;
     final progress = totalMicroseconds == 0
         ? 0.0
-        : (elapsed.inMicroseconds / totalMicroseconds).clamp(0.0, 1.0);
+        : (elapsed.inMicroseconds / totalMicroseconds)
+            .clamp(0.0, 1.0)
+            .toDouble();
     final remaining = window.total - elapsed;
 
     return TimeSnapshot(
