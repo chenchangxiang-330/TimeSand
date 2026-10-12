@@ -58,7 +58,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     await tester.tap(find.byKey(const ValueKey('history-button')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('历史记录'), findsOneWidget);
     expect(find.text('还没有历史投入记录。'), findsOneWidget);
