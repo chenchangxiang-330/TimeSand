@@ -169,7 +169,7 @@ class _HistoryPageState extends State<HistoryPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<Bottle>(
-                  value: selectedBottle,
+                  initialValue: selectedBottle,
                   decoration: const InputDecoration(labelText: '时间之瓶'),
                   items: [
                     for (final bottle in _bottles)
