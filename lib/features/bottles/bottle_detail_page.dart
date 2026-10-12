@@ -31,14 +31,11 @@ class _BottleDetailPageState extends State<BottleDetailPage> {
   void initState() {
     super.initState();
     _now = DateTime.now();
-    _ticker = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (mounted) {
-          setState(() => _now = DateTime.now());
-        }
-      },
-    );
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() => _now = DateTime.now());
+      }
+    });
     _load();
   }
 
@@ -93,9 +90,7 @@ class _BottleDetailPageState extends State<BottleDetailPage> {
                 const SizedBox(height: 4),
                 Center(
                   child: Text(
-                    '永久成长累计 · ' +
-                        stats.entryCount.toString() +
-                        ' 条记录',
+                    '永久成长累计 · ' + stats.entryCount.toString() + ' 条记录',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -105,17 +100,14 @@ class _BottleDetailPageState extends State<BottleDetailPage> {
                 if (stats.byMonth.isEmpty)
                   const Card(child: ListTile(title: Text('还没有历史投入。')))
                 else
-                  ...stats.byMonth.entries
-                      .toList()
-                      .reversed
-                      .map(
-                        (entry) => Card(
-                          child: ListTile(
-                            title: Text(entry.key),
-                            trailing: Text(formatRecordDuration(entry.value)),
-                          ),
-                        ),
+                  ...stats.byMonth.entries.toList().reversed.map(
+                    (entry) => Card(
+                      child: ListTile(
+                        title: Text(entry.key),
+                        trailing: Text(formatRecordDuration(entry.value)),
                       ),
+                    ),
+                  ),
                 const SizedBox(height: 24),
                 Text('投入记录', style: theme.textTheme.titleLarge),
                 const SizedBox(height: 8),
@@ -134,15 +126,15 @@ class _BottleDetailPageState extends State<BottleDetailPage> {
                         subtitle: Text(
                           entry.endedAt == null
                               ? '进行中'
-                              : entry.startedAt
-                                      .toLocal()
-                                      .toString()
-                                      .substring(11, 16) +
-                                  ' - ' +
-                                  entry.endedAt!
-                                      .toLocal()
-                                      .toString()
-                                      .substring(11, 16),
+                              : entry.startedAt.toLocal().toString().substring(
+                                      11,
+                                      16,
+                                    ) +
+                                    ' - ' +
+                                    entry.endedAt!
+                                        .toLocal()
+                                        .toString()
+                                        .substring(11, 16),
                         ),
                         trailing: Text(
                           formatRecordDuration(entry.durationAt(_now)),

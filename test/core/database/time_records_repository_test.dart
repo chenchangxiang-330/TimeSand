@@ -44,10 +44,7 @@ void main() {
   });
 
   test('persists and restores an active timer from the database', () async {
-    final bottle = await repository.createBottle(
-      name: '写作',
-      color: 0xFFE8C98D,
-    );
+    final bottle = await repository.createBottle(name: '写作', color: 0xFFE8C98D);
     final startedAt = DateTime(2026, 10, 13, 9);
     final active = await repository.startTimer(
       bottleId: bottle.id!,

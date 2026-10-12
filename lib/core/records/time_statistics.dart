@@ -99,7 +99,8 @@ abstract final class TimeStatistics {
       total += duration;
       count++;
       final localStart = entry.startedAt.toLocal();
-      final key = localStart.year.toString().padLeft(4, '0') +
+      final key =
+          localStart.year.toString().padLeft(4, '0') +
           '-' +
           localStart.month.toString().padLeft(2, '0');
       byMonth.update(

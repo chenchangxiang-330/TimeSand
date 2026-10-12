@@ -16,9 +16,7 @@ class TimeSandApp extends StatelessWidget {
       title: 'TimeSand',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: HomePage(
-        repository: TimeRecordsRepository(database),
-      ),
+      home: HomePage(repository: TimeRecordsRepository(database)),
     );
   }
 }

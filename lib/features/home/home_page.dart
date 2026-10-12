@@ -42,7 +42,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _now = DateTime.now();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _refreshClock());
+    _ticker = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _refreshClock(),
+    );
     _load();
   }
 
@@ -93,11 +96,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   DailyTimeStats get _todayStats {
-    return TimeStatistics.forDate(
-      date: _now,
-      now: _now,
-      entries: _entries,
-    );
+    return TimeStatistics.forDate(date: _now, now: _now, entries: _entries);
   }
 
   @override
@@ -157,8 +156,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               value: snapshot.progress,
                               minHeight: 8,
                               borderRadius: BorderRadius.circular(8),
-                              backgroundColor:
-                                  Colors.white.withValues(alpha: 0.8),
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.8,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Wrap(
@@ -171,11 +171,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 ),
                                 _MetricCard(
                                   label: '还剩下',
-                                  value: formatClockDuration(snapshot.remaining),
+                                  value: formatClockDuration(
+                                    snapshot.remaining,
+                                  ),
                                 ),
                                 _MetricCard(
                                   label: '今日进度',
-                                  value: '${(snapshot.progress * 100).toStringAsFixed(1)}%',
+                                  value:
+                                      '${(snapshot.progress * 100).toStringAsFixed(1)}%',
                                 ),
                               ],
                             ),
@@ -203,9 +206,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             ),
                             const SizedBox(height: 12),
                             if (_bottles.isEmpty)
-                              const _EmptyCard(
-                                message: '还没有时间之瓶，先创建一个吧。',
-                              )
+                              const _EmptyCard(message: '还没有时间之瓶，先创建一个吧。')
                             else
                               ..._bottles.map(
                                 (bottle) => Padding(
@@ -484,30 +485,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => BottleDetailPage(
-          repository: widget.repository,
-          bottle: bottle,
-        ),
+        builder: (_) =>
+            BottleDetailPage(repository: widget.repository, bottle: bottle),
       ),
     );
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _formatDate(DateTime date) {
-    const weekdays = <String>[
-      '星期一',
-      '星期二',
-      '星期三',
-      '星期四',
-      '星期五',
-      '星期六',
-      '星期日',
-    ];
+    const weekdays = <String>['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
     return date.year.toString() +
         '年' +
         date.month.toString() +
@@ -638,10 +629,7 @@ class _EmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(message),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
     );
   }
 }
@@ -655,10 +643,7 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       color: Theme.of(context).colorScheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Text(message),
-      ),
+      child: Padding(padding: const EdgeInsets.all(14), child: Text(message)),
     );
   }
 }

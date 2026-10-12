@@ -8,7 +8,8 @@ class TimeSandDatabase {
   Database get database => _database;
 
   static Future<TimeSandDatabase> open({String? path}) async {
-    final databasePath = path ?? '${await databaseFactoryFfi.getDatabasesPath()}/timesand.db';
+    final databasePath =
+        path ?? '${await databaseFactoryFfi.getDatabasesPath()}/timesand.db';
     final database = await databaseFactoryFfi.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(

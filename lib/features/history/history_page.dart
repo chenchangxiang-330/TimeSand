@@ -52,7 +52,9 @@ class _HistoryPageState extends State<HistoryPage> {
             key: const ValueKey('manual-entry-button'),
             tooltip: '补录时间',
             icon: const Icon(Icons.edit_calendar_outlined),
-            onPressed: _bottles.isEmpty ? null : () => _createManualEntry(context),
+            onPressed: _bottles.isEmpty
+                ? null
+                : () => _createManualEntry(context),
           ),
         ],
       ),
@@ -79,9 +81,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                     : Icons.edit_calendar_outlined,
                               ),
                               title: Text(names[entry.bottleId] ?? '已归档的时间之瓶'),
-                              subtitle: Text(
-                                _formatInterval(entry),
-                              ),
+                              subtitle: Text(_formatInterval(entry)),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -119,9 +119,9 @@ class _HistoryPageState extends State<HistoryPage> {
       await _load();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -173,10 +173,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   decoration: const InputDecoration(labelText: '时间之瓶'),
                   items: [
                     for (final bottle in _bottles)
-                      DropdownMenuItem(
-                        value: bottle,
-                        child: Text(bottle.name),
-                      ),
+                      DropdownMenuItem(value: bottle, child: Text(bottle.name)),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -232,7 +229,8 @@ class _HistoryPageState extends State<HistoryPage> {
 
   String _formatInterval(TimeEntry entry) {
     final start = entry.startedAt.toLocal();
-    final date = start.year.toString() +
+    final date =
+        start.year.toString() +
         '-' +
         start.month.toString().padLeft(2, '0') +
         '-' +

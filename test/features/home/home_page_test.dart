@@ -25,10 +25,7 @@ void main() {
   testWidgets('home displays a bottle and starts and stops a timer', (
     tester,
   ) async {
-    final bottle = await repository.createBottle(
-      name: '专注',
-      color: 0xFFE8C98D,
-    );
+    final bottle = await repository.createBottle(name: '专注', color: 0xFFE8C98D);
 
     await tester.pumpWidget(
       MaterialApp(

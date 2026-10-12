@@ -43,9 +43,8 @@ abstract final class TimeEntryRules {
       final overlaps = otherEnd == null
           ? endedAt == null || endedAt.isAfter(entry.startedAt)
           : endedAt == null
-              ? startedAt.isBefore(otherEnd)
-              : startedAt.isBefore(otherEnd) &&
-                  endedAt.isAfter(entry.startedAt);
+          ? startedAt.isBefore(otherEnd)
+          : startedAt.isBefore(otherEnd) && endedAt.isAfter(entry.startedAt);
 
       if (overlaps) {
         throw const OverlappingTimeEntryException();

@@ -1,7 +1,4 @@
-enum TimeEntrySource {
-  active,
-  manual,
-}
+enum TimeEntrySource { active, manual }
 
 extension TimeEntrySourceCodec on TimeEntrySource {
   String get value => name;
