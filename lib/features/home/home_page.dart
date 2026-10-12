@@ -12,9 +12,14 @@ import '../history/history_page.dart';
 import '../hourglass/hourglass_placeholder.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({required this.repository, super.key});
+  const HomePage({
+    required this.repository,
+    this.enableTicker = true,
+    super.key,
+  });
 
   final TimeRecordsRepository repository;
+  final bool enableTicker;
 
   @override
   State<HomePage> createState() => _HomePageState();
