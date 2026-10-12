@@ -33,18 +33,19 @@ void main() {
         home: HomePage(repository: repository, enableTicker: false),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     expect(find.text('专注'), findsOneWidget);
     final startKey = ValueKey('start-' + bottle.id.toString());
     expect(find.byKey(startKey), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(startKey));
     await tester.tap(find.byKey(startKey));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('stop-timer-button')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('stop-timer-button')));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.text('没有正在进行的计时'), findsOneWidget);
   });
 
@@ -55,10 +56,10 @@ void main() {
         home: HomePage(repository: repository, enableTicker: false),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('history-button')));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
 
     expect(find.text('历史记录'), findsOneWidget);
     expect(find.text('还没有历史投入记录。'), findsOneWidget);
