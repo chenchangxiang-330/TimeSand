@@ -72,9 +72,34 @@ jobs:
       - name: Build unsigned development app
         run: flutter build macos --debug
 
-      - name: Upload development app
+      - name: Package and verify macOS app
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_path="build/macos/Build/Products/Debug/TimeSand.app"
+          zip_path="build/artifacts/TimeSand-macos-debug.zip"
+          test -d "$app_path/Contents"
+          test -x "$app_path/Contents/MacOS/TimeSand"
+          mkdir -p build/artifacts
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" "$zip_path"
+
+          extract_dir="$(mktemp -d)"
+          trap 'rm -rf "$extract_dir"' EXIT
+          ditto -x -k "$zip_path" "$extract_dir"
+          extracted_app="$extract_dir/TimeSand.app"
+
+          test -d "$extracted_app/Contents"
+          test -f "$extracted_app/Contents/Info.plist"
+          test -x "$extracted_app/Contents/MacOS/TimeSand"
+          symlink_count="$(find "$extracted_app" -type l -print | wc -l | tr -d ' ')"
+          test "$symlink_count" -gt 0
+          printf 'Verified ZIP: %s\n' "$zip_path"
+          printf 'Verified app executable and %s preserved symlink(s).\n' "$symlink_count"
+          find "$extracted_app/Contents" -maxdepth 2 -print | sort
+
+      - name: Upload zipped development app
         uses: actions/upload-artifact@v4
         with:
-          name: timesand-macos-debug
-          path: build/macos/Build/Products/Debug/TimeSand.app
+          name: timesand-macos-debug-zip
+          path: build/artifacts/TimeSand-macos-debug.zip
           retention-days: 3
