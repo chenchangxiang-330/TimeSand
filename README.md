@@ -5,74 +5,100 @@ TimeSand（时间之沙）是一款面向个人成长的艺术化时间管理 Ap
 > 时间终将流逝，但你可以决定它流向哪里。  
 > Time will pass, but you decide where it flows.
 
-## Phase 1 状态
+## Phase 2 状态
 
-Phase 1 建立跨平台 Flutter 工程基础，当前首页实时展示：
+Phase 2 在 Phase 1 的实时首页基础上加入了本地时间记录能力：
 
-- TimeSand 品牌与产品理念
-- 简洁的时间沙漏占位组件
-- 当前本地日期
-- 当天已流逝时间
-- 当天剩余时间
-- 当天时间流逝比例与进度条
+- 使用 SQLite 保存时间之瓶和时间记录
+- 创建、编辑和归档时间之瓶
+- 开始、停止一个设备上的唯一活动计时器
+- 活动计时器关闭 App 后可以根据真实开始时间恢复
+- 支持 active 计时记录和 manual 补录记录
+- 保存真实开始时间和结束时间，时长由时间区间重新计算
+- 每日时间之瓶统计
+- 永久成长瓶累计统计和按月历史
+- 时间海洋统计：当天已流逝时间减去当天有效记录时间
+- 历史记录页面和基础瓶子详情页面
+- 保存前检查无效区间、重叠记录和多个活动计时器
 
-时间数据来自系统时钟，页面运行期间每秒刷新；应用重新启动后会重新计算当前自然日状态。时间计算使用本地日期起点和下一自然日起点，因此不会把自然日固定假设为 24 小时。
+每日时间之瓶只表示本地自然日的投入。永久成长瓶从瓶子创建后累计所有历史 TimeEntry，日期切换不会删除历史数据。跨午夜和夏令时的 23/25 小时自然日按本地日期边界计算，不把自然日固定为 24 小时。
 
-当前尚未实现：时间之瓶、时间海洋、历史统计、账户、同步、数据库、真实流体模拟和复杂动画。
+## 尚未实现
+
+- 用户账户
+- 云端同步和跨设备同步
+- 离线同步队列
+- iOS 和 Windows 宿主工程
+- 复杂流体模拟
+- 桌面悬浮沙漏
+- AI、社交和付费功能
+- 正式发布签名、公证和商店分发
+
+Phase 2 只使用本地数据库，当前没有账户和云端数据备份。
 
 ## 技术栈与版本
 
-- Flutter 3.47.7（stable，GitHub Actions 实际解析版本）
-- Dart 3.13.5（随 Flutter 3.47.7 提供）
-- Android 与 macOS 共用 Dart 业务代码
-- 当前无第三方运行时依赖；仅使用 Flutter SDK 与 Dart 标准库
+- Flutter 3.47.7 stable（以 GitHub Actions 实际解析版本为准）
+- Dart 3.13.5
+- sqflite_common_ffi: ^2.4.3
+- Android 和 macOS 共用同一套 Dart 业务代码
+- 运行时依赖保持最小化
 
-PR 工作流会打印完整的 Flutter、Dart 和 runner 信息，后续升级 stable channel 时以 CI 日志为准。
+SQLite 数据库使用 sqflite_common_ffi，在 Android、macOS 和 Flutter 测试环境中使用同一套数据库访问代码。时间以 UTC ISO-8601 字符串保存；界面和每日统计转换为设备本地时间。duration_seconds 是缓存字段，真实时间区间仍由 started_at 和 ended_at 决定。
 
 ## 支持平台
 
-当前已初始化并优先验证：
+当前工程包含：
 
-- Android（debug APK）
-- macOS（debug .app，未签名）
+- Android（Debug APK，云端构建）
+- macOS（Debug .app，云端构建，未签名）
 
-未来预留：
-
-- iOS
-- Windows
-
-未配置 Apple 签名、公证或 Android release 签名，因此当前构建产物仅用于开发测试，不代表可正式分发。
+Phase 2 的 Android 和 macOS 真机回归需要在当前代码合并后重新执行。构建产物只用于开发测试，不代表正式分发。
 
 ## 工程结构
 
 ~~~text
 lib/
-  app/                         App 根组件与主题入口
-  core/time/                   本地自然日与时间进度计算
+  app/                         App 根组件和主题入口
+  core/
+    database/                  SQLite 数据库和仓库
+    records/                   时间记录模型、校验和统计
+    time/                      本地自然日和时间进度计算
   design/                      共享视觉设计
-  features/home/               Phase 1 首页
-  features/hourglass/          沙漏占位组件
+  features/
+    home/                      首页、瓶子列表和当前计时
+    hourglass/                 沙漏占位组件
+    bottles/                   永久成长瓶详情
+    history/                   历史记录和手动补录
 test/
-  core/time/                   时间计算单元测试
-android/                       Android 宿主工程与包名说明
-macos/                         macOS 宿主工程与 Bundle ID 说明
+  core/time/                   Phase 1 时间窗口测试
+  core/records/                统计和时间区间测试
+  core/database/               SQLite 仓库和计时器恢复测试
+  features/home/               首页 Widget 测试
+android/                       Android 宿主工程
+macos/                         macOS 宿主工程
 .github/workflows/
   pull-request.yml             PR 格式、分析、测试和平台构建
-  build.yml                    手动触发的 Android/macOS 构建
+  build.yml                    手动 Android/macOS 构建
 ~~~
-
-时间之瓶、时间海洋、历史统计在后续阶段加入，不提前创建空实现目录。
 
 ## 开发
 
-需要 Flutter 3.47.7 或兼容的 stable SDK。进入项目根目录后执行：
+需要 Flutter 3.47.7 或兼容的 stable SDK：
 
 ~~~sh
 flutter pub get
 flutter run -d <device-id>
 ~~~
 
-Android 与 macOS 使用相同的 lib/ 代码。云端构建会先用当前 stable SDK 重新生成对应宿主目录，再进行 debug 构建，以避免宿主模板与 SDK 不匹配。
+应用启动时初始化 SQLite 数据库。默认数据库路径由 sqflite_common_ffi 提供；不同平台的具体目录以运行时为准。
+
+清理本地数据时，请先退出应用：
+
+- Android：adb shell pm clear com.timesand.timesand
+- macOS：删除应用使用的 timesand.db 文件，或在开发环境中调用 TimeSandDatabase.reset() 后重新启动
+
+清理数据会删除瓶子和时间记录，不能恢复。
 
 ## 测试与质量检查
 
@@ -82,26 +108,35 @@ flutter analyze
 flutter test
 ~~~
 
-核心时间模块通过传入 DateTime now 测试；本地日期边界由 DateTime 的本地时区规则决定，能够覆盖跨午夜以及夏令时产生的 23/25 小时自然日。
+测试覆盖：
+
+- 瓶子创建、修改、归档
+- 活动计时器创建、停止和数据库恢复
+- 手动补录、删除、无效区间和重叠校验
+- 每日瓶、永久成长瓶和时间海洋统计
+- 跨午夜和边界时刻
+- 首页显示瓶子、开始/停止按钮和历史页面导航
 
 ## GitHub Actions
 
-Pull Request 工作流在 Ubuntu 与 macOS standard runner 上执行：
+Pull Request 工作流在 Ubuntu 和 macOS standard runner 上执行：
 
 1. 安装 Flutter stable
 2. flutter pub get
 3. Dart 格式检查
 4. flutter analyze
 5. flutter test
-6. Android debug APK 和 macOS debug App 构建
-7. 上传临时构建产物
+6. Android Debug APK 构建
+7. macOS Debug App 构建
+8. 将完整 macOS .app 打包成 ZIP，验证 Contents、可执行文件和符号链接后上传
 
-手动构建工作流通过 workflow_dispatch 触发，并上传带有开发测试标记的 Android APK 与 macOS .app。Artifacts 保留 3 天。工作流不使用付费 Larger Runner。
+手动构建工作流通过 workflow_dispatch 触发，并上传 Android APK 和 macOS ZIP。Artifacts 保留 3 天，不使用付费 Larger Runner。macOS 构建未签名、未公证。
 
 ## 后续路线
 
-1. 时间之瓶：活动分类、每日瓶和永久成长瓶
-2. 时间海洋：未分类时间补录
-3. 历史统计：按日、周、月和长期趋势
-4. 本地持久化与数据导出
-5. iOS、Windows 宿主工程与发布签名
+1. 在 Android 和 macOS 真机上回归 Phase 2 的持久化、跨午夜和窗口布局
+2. 增加更完整的记录编辑和日期筛选
+3. 增加本地数据导出和备份
+4. 设计账户与云端同步
+5. 初始化 iOS、Windows 宿主工程
+6. 规划正式签名、公证和发布流程
