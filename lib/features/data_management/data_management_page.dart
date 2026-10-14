@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -186,28 +185,21 @@ class _DataManagementPageState extends State<DataManagementPage> {
               Text('瓶子：${preview.bottleCount} 个'),
               Text('时间记录：${preview.entryCount} 条'),
               const SizedBox(height: 16),
-              RadioListTile<ImportMode>(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('覆盖恢复'),
-                subtitle: const Text('删除当前本地数据后恢复备份'),
-                value: ImportMode.replace,
-                groupValue: mode,
+              DropdownButtonFormField<ImportMode>(
+                decoration: const InputDecoration(labelText: '导入模式'),
+                initialValue: mode,
+                items: const [
+                  DropdownMenuItem(
+                    value: ImportMode.merge,
+                    child: Text('合并导入：保留当前数据'),
+                  ),
+                  DropdownMenuItem(
+                    value: ImportMode.replace,
+                    child: Text('覆盖恢复：替换当前数据'),
+                  ),
+                ],
                 onChanged: (value) {
-                  if (value != null) {
-                    setDialogState(() => mode = value);
-                  }
-                },
-              ),
-              RadioListTile<ImportMode>(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('合并导入'),
-                subtitle: const Text('保留当前数据并追加备份内容'),
-                value: ImportMode.merge,
-                groupValue: mode,
-                onChanged: (value) {
-                  if (value != null) {
-                    setDialogState(() => mode = value);
-                  }
+                  if (value != null) setDialogState(() => mode = value);
                 },
               ),
               if (mode == ImportMode.replace)
