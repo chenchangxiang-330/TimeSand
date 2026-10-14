@@ -140,3 +140,16 @@ Pull Request 工作流在 Ubuntu 和 macOS standard runner 上执行：
 4. 设计账户与云端同步
 5. 初始化 iOS、Windows 宿主工程
 6. 规划正式签名、公证和发布流程
+
+
+## Phase 2.1 数据安全与历史体验
+
+Phase 2.1 已加入本地数据导出、导入和迁移保护：
+
+- SQLite schema version 2 通过升级步骤为旧版 `time_entries` 增加默认为空的 `notes` 字段。迁移在数据库升级事务中执行，失败时保留旧数据；后续结构变化必须递增版本并添加明确的 `onUpgrade` 步骤，不能删除数据库绕过迁移。
+- JSON 备份包含 `format_version`、UTC `exported_at`、`timezone`、`database.schema_version`、`bottles` 和 `time_entries`。CSV 使用稳定表头：`time_entry_id,bottle_id,bottle_name,started_at,ended_at,duration_seconds,source,created_at,updated_at`。
+- JSON 导入支持合并和覆盖恢复。导入前验证格式版本、必需字段、时间区间、瓶子引用、重叠记录和活动记录唯一性；验证和写入都在事务保护下，错误会拒绝整个文件。覆盖恢复需要明确二次确认，不会静默删除本地数据。
+- 历史页面支持按日期、月份和时间之瓶筛选，支持编辑和删除记录；删除前会确认，修改或删除后会重新计算每日瓶、永久成长瓶和时间海洋统计。跨午夜记录按本地自然日边界切分。
+- 依赖新增 `file_selector: ^1.1.0` 和 `share_plus: ^11.1.0`。macOS 使用文件保存位置，Android 使用系统分享面板；数据仍只保存在本设备。
+
+本阶段仍未实现账户、云端同步、跨设备同步、iOS/Windows 宿主工程、正式签名和公证。云端 APK、macOS App 与 ZIP 均为开发测试构建。
