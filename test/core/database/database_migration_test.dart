@@ -34,10 +34,7 @@ void main() {
     );
     expect(columns.any((column) => column['name'] == 'notes'), isTrue);
     expect(await upgraded.database.query('bottles'), hasLength(1));
-    expect(
-      (await upgraded.database.query('time_entries')).single['notes'],
-      '',
-    );
+    expect((await upgraded.database.query('time_entries')).single['notes'], '');
     await upgraded.close();
     await databaseFactoryFfiNoIsolate.deleteDatabase(path);
   });

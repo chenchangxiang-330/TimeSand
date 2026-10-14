@@ -64,33 +64,27 @@ class _HistoryPageState extends State<HistoryPage> {
             now: now,
             entries: _entries,
           );
-    final total = filteredEntries.fold<Duration>(
-      Duration.zero,
-      (sum, entry) {
-        if (_selectedDate != null) {
-          return sum +
-              HistoryFilter.intersectionDuration(
-                entry: entry,
-                start: DayWindow.forDate(_selectedDate!).start,
-                end: DayWindow.forDate(_selectedDate!).end,
-                now: now,
-              );
-        }
-        if (_selectedMonth != null) {
-          return sum +
-              HistoryFilter.intersectionDuration(
-                entry: entry,
-                start: DateTime(_selectedMonth!.year, _selectedMonth!.month),
-                end: DateTime(
-                  _selectedMonth!.year,
-                  _selectedMonth!.month + 1,
-                ),
-                now: now,
-              );
-        }
-        return sum + entry.durationAt(now);
-      },
-    );
+    final total = filteredEntries.fold<Duration>(Duration.zero, (sum, entry) {
+      if (_selectedDate != null) {
+        return sum +
+            HistoryFilter.intersectionDuration(
+              entry: entry,
+              start: DayWindow.forDate(_selectedDate!).start,
+              end: DayWindow.forDate(_selectedDate!).end,
+              now: now,
+            );
+      }
+      if (_selectedMonth != null) {
+        return sum +
+            HistoryFilter.intersectionDuration(
+              entry: entry,
+              start: DateTime(_selectedMonth!.year, _selectedMonth!.month),
+              end: DateTime(_selectedMonth!.year, _selectedMonth!.month + 1),
+              now: now,
+            );
+      }
+      return sum + entry.durationAt(now);
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -177,9 +171,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   onPressed: () => _chooseDate(context),
                   icon: const Icon(Icons.calendar_today_outlined),
                   label: Text(
-                    _selectedDate == null
-                        ? '按日期'
-                        : _formatDate(_selectedDate!),
+                    _selectedDate == null ? '按日期' : _formatDate(_selectedDate!),
                   ),
                 ),
                 OutlinedButton.icon(
@@ -375,7 +367,9 @@ class _HistoryPageState extends State<HistoryPage> {
   }) async {
     final now = DateTime.now();
     final startController = TextEditingController(
-      text: _formatInput(initialStart ?? now.subtract(const Duration(hours: 1))),
+      text: _formatInput(
+        initialStart ?? now.subtract(const Duration(hours: 1)),
+      ),
     );
     final endController = TextEditingController(
       text: _formatInput(initialEnd ?? now),
@@ -473,9 +467,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   String _formatMonth(DateTime value) {
-    return value.year.toString() +
-        '-' +
-        value.month.toString().padLeft(2, '0');
+    return value.year.toString() + '-' + value.month.toString().padLeft(2, '0');
   }
 
   String _formatInput(DateTime value) {
@@ -491,8 +483,8 @@ class _HistoryPageState extends State<HistoryPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

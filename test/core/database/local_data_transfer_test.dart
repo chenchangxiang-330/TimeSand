@@ -68,68 +68,75 @@ void main() {
     expect(await repository.fetchEntries(), hasLength(1));
   });
 
-  test('rejects malformed JSON, missing fields, unknown bottles, and overlaps',
-      () async {
-    expect(
-      () => LocalDataTransfer.parseJson('{not json'),
-      throwsA(isA<FormatException>()),
-    );
-    final bottle = await repository.createBottle(name: '学习', color: 3);
-    await repository.createManualEntry(
-      bottleId: bottle.id!,
-      startedAt: DateTime(2026, 10, 14, 10),
-      endedAt: DateTime(2026, 10, 14, 11),
-    );
-    final exported = await LocalDataTransfer.exportJson(repository);
-    final map = jsonDecode(exported) as Map<String, dynamic>;
-    final missing = Map<String, dynamic>.from(map)..remove('bottles');
-    expect(
-      () => LocalDataTransfer.parseJson(jsonEncode(missing)),
-      throwsA(isA<LocalDataTransferException>()),
-    );
-    final unknown = jsonDecode(exported) as Map<String, dynamic>;
-    (unknown['time_entries'] as List).first['bottle_id'] = 999;
-    expect(
-      () => LocalDataTransfer.parseJson(jsonEncode(unknown)),
-      throwsA(isA<LocalDataTransferException>()),
-    );
-    final overlap = jsonDecode(exported) as Map<String, dynamic>;
-    final entry = Map<String, dynamic>.from(
-      (overlap['time_entries'] as List).first as Map,
-    )..['id'] = 2;
-    (overlap['time_entries'] as List).add(entry);
-    expect(
-      () => LocalDataTransfer.parseJson(jsonEncode(overlap)),
-      throwsA(isA<LocalDataTransferException>()),
-    );
-  });
+  test(
+    'rejects malformed JSON, missing fields, unknown bottles, and overlaps',
+    () async {
+      expect(
+        () => LocalDataTransfer.parseJson('{not json'),
+        throwsA(isA<FormatException>()),
+      );
+      final bottle = await repository.createBottle(name: '学习', color: 3);
+      await repository.createManualEntry(
+        bottleId: bottle.id!,
+        startedAt: DateTime(2026, 10, 14, 10),
+        endedAt: DateTime(2026, 10, 14, 11),
+      );
+      final exported = await LocalDataTransfer.exportJson(repository);
+      final map = jsonDecode(exported) as Map<String, dynamic>;
+      final missing = Map<String, dynamic>.from(map)..remove('bottles');
+      expect(
+        () => LocalDataTransfer.parseJson(jsonEncode(missing)),
+        throwsA(isA<LocalDataTransferException>()),
+      );
+      final unknown = jsonDecode(exported) as Map<String, dynamic>;
+      (unknown['time_entries'] as List).first['bottle_id'] = 999;
+      expect(
+        () => LocalDataTransfer.parseJson(jsonEncode(unknown)),
+        throwsA(isA<LocalDataTransferException>()),
+      );
+      final overlap = jsonDecode(exported) as Map<String, dynamic>;
+      final entry = Map<String, dynamic>.from(
+        (overlap['time_entries'] as List).first as Map,
+      )..['id'] = 2;
+      (overlap['time_entries'] as List).add(entry);
+      expect(
+        () => LocalDataTransfer.parseJson(jsonEncode(overlap)),
+        throwsA(isA<LocalDataTransferException>()),
+      );
+    },
+  );
 
-  test('merge rejects overlaps and failed replace preserves existing data',
-      () async {
-    final bottle = await repository.createBottle(name: '已有', color: 4);
-    await repository.createManualEntry(
-      bottleId: bottle.id!,
-      startedAt: DateTime(2026, 10, 14, 12),
-      endedAt: DateTime(2026, 10, 14, 13),
-    );
-    final exported = await LocalDataTransfer.exportJson(repository);
-    expect(
-      () => LocalDataTransfer.importJson(
-        repository,
-        exported,
-        mode: ImportMode.merge,
-      ),
-      throwsA(isA<LocalDataTransferException>()),
-    );
-    expect(
-      () => LocalDataTransfer.importJson(
-        repository,
-        '{"format_version":1}',
-        mode: ImportMode.replace,
-      ),
-      throwsA(isA<LocalDataTransferException>()),
-    );
-    expect(await repository.fetchBottles(includeArchived: true), hasLength(1));
-    expect(await repository.fetchEntries(), hasLength(1));
-  });
+  test(
+    'merge rejects overlaps and failed replace preserves existing data',
+    () async {
+      final bottle = await repository.createBottle(name: '已有', color: 4);
+      await repository.createManualEntry(
+        bottleId: bottle.id!,
+        startedAt: DateTime(2026, 10, 14, 12),
+        endedAt: DateTime(2026, 10, 14, 13),
+      );
+      final exported = await LocalDataTransfer.exportJson(repository);
+      expect(
+        () => LocalDataTransfer.importJson(
+          repository,
+          exported,
+          mode: ImportMode.merge,
+        ),
+        throwsA(isA<LocalDataTransferException>()),
+      );
+      expect(
+        () => LocalDataTransfer.importJson(
+          repository,
+          '{"format_version":1}',
+          mode: ImportMode.replace,
+        ),
+        throwsA(isA<LocalDataTransferException>()),
+      );
+      expect(
+        await repository.fetchBottles(includeArchived: true),
+        hasLength(1),
+      );
+      expect(await repository.fetchEntries(), hasLength(1));
+    },
+  );
 }

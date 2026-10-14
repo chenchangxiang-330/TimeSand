@@ -103,10 +103,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
         ShareParams(
           title: title,
           files: <XFile>[
-            XFile.fromData(
-              utf8.encode(contents),
-              mimeType: mimeType,
-            ),
+            XFile.fromData(utf8.encode(contents), mimeType: mimeType),
           ],
           fileNameOverrides: <String>[filename],
         ),
@@ -148,11 +145,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
       if (mode == null) {
         return;
       }
-      await LocalDataTransfer.importJson(
-        widget.repository,
-        raw,
-        mode: mode,
-      );
+      await LocalDataTransfer.importJson(widget.repository, raw, mode: mode);
       if (mounted) {
         _showMessage(
           context,
@@ -220,9 +213,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
               if (mode == ImportMode.replace)
                 Text(
                   '覆盖恢复会删除当前瓶子和时间记录，此操作不可撤销。',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
             ],
           ),
@@ -242,8 +233,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
   }
 
   void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

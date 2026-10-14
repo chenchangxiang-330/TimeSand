@@ -10,30 +10,32 @@ abstract final class HistoryFilter {
     DateTime? now,
   }) {
     final referenceNow = now ?? DateTime.now();
-    return entries.where((entry) {
-      if (bottleId != null && entry.bottleId != bottleId) return false;
-      if (date != null &&
-          intersectionDuration(
-                entry: entry,
-                start: DayWindow.forDate(date).start,
-                end: DayWindow.forDate(date).end,
-                now: referenceNow,
-              ) <=
-              Duration.zero) {
-        return false;
-      }
-      if (month != null &&
-          intersectionDuration(
-                entry: entry,
-                start: DateTime(month.year, month.month),
-                end: DateTime(month.year, month.month + 1),
-                now: referenceNow,
-              ) <=
-              Duration.zero) {
-        return false;
-      }
-      return true;
-    }).toList(growable: false);
+    return entries
+        .where((entry) {
+          if (bottleId != null && entry.bottleId != bottleId) return false;
+          if (date != null &&
+              intersectionDuration(
+                    entry: entry,
+                    start: DayWindow.forDate(date).start,
+                    end: DayWindow.forDate(date).end,
+                    now: referenceNow,
+                  ) <=
+                  Duration.zero) {
+            return false;
+          }
+          if (month != null &&
+              intersectionDuration(
+                    entry: entry,
+                    start: DateTime(month.year, month.month),
+                    end: DateTime(month.year, month.month + 1),
+                    now: referenceNow,
+                  ) <=
+                  Duration.zero) {
+            return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
   }
 
   static Duration intersectionDuration({
@@ -44,8 +46,9 @@ abstract final class HistoryFilter {
   }) {
     final rawEnd = entry.endedAt ?? now;
     final effectiveEnd = rawEnd.isAfter(now) ? now : rawEnd;
-    final effectiveStart =
-        entry.startedAt.isAfter(start) ? entry.startedAt : start;
+    final effectiveStart = entry.startedAt.isAfter(start)
+        ? entry.startedAt
+        : start;
     final cappedEnd = effectiveEnd.isBefore(end) ? effectiveEnd : end;
     if (!cappedEnd.isAfter(effectiveStart)) return Duration.zero;
     return cappedEnd.difference(effectiveStart);

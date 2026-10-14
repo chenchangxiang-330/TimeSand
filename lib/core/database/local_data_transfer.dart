@@ -111,9 +111,7 @@ abstract final class LocalDataTransfer {
     return const JsonEncoder.withIndent('  ').convert(bundle.toJson());
   }
 
-  static Future<String> exportCsv(
-    TimeRecordsRepository repository,
-  ) async {
+  static Future<String> exportCsv(TimeRecordsRepository repository) async {
     final bundle = await capture(repository);
     final rows = <List<Object?>>[
       <Object?>[
@@ -169,9 +167,7 @@ abstract final class LocalDataTransfer {
     final bottlesRaw = decoded['bottles'];
     final entriesRaw = decoded['time_entries'];
     if (bottlesRaw is! List || entriesRaw is! List) {
-      throw const LocalDataTransferException(
-        '导入文件缺少 bottles 或 time_entries。',
-      );
+      throw const LocalDataTransferException('导入文件缺少 bottles 或 time_entries。');
     }
 
     final bottles = <Bottle>[];
