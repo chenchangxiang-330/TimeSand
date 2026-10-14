@@ -1,16 +1,18 @@
-import 'dart:convert';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/database/local_data_transfer.dart';
 import '../../core/database/time_records_repository.dart';
+import 'backup_files.dart';
 
 class DataManagementPage extends StatefulWidget {
-  const DataManagementPage({required this.repository, super.key});
+  const DataManagementPage({
+    required this.repository,
+    this.files,
+    super.key,
+  });
 
   final TimeRecordsRepository repository;
+  final BackupFiles? files;
 
   @override
   State<DataManagementPage> createState() => _DataManagementPageState();
@@ -18,6 +20,8 @@ class DataManagementPage extends StatefulWidget {
 
 class _DataManagementPageState extends State<DataManagementPage> {
   bool _busy = false;
+
+  BackupFiles get _files => widget.files ?? NativeBackupFiles();
 
   @override
   Widget build(BuildContext context) {
@@ -70,99 +74,78 @@ class _DataManagementPageState extends State<DataManagementPage> {
   }
 
   Future<void> _exportJson(BuildContext context) async {
-    await _shareFile(
+    await _export(
       context,
-      filename: 'timesand-backup.json',
+      fileName: 'timesand-backup.json',
       mimeType: 'application/json',
       contents: await LocalDataTransfer.exportJson(widget.repository),
-      title: 'TimeSand JSON 备份',
     );
   }
 
   Future<void> _exportCsv(BuildContext context) async {
-    await _shareFile(
+    await _export(
       context,
-      filename: 'timesand-time-entries.csv',
+      fileName: 'timesand-time-entries.csv',
       mimeType: 'text/csv',
       contents: await LocalDataTransfer.exportCsv(widget.repository),
-      title: 'TimeSand CSV',
     );
   }
 
-  Future<void> _shareFile(
+  Future<void> _export(
     BuildContext context, {
-    required String filename,
+    required String fileName,
     required String mimeType,
     required String contents,
-    required String title,
   }) async {
     setState(() => _busy = true);
     try {
-      await SharePlus.instance.share(
-        ShareParams(
-          title: title,
-          files: <XFile>[
-            XFile.fromData(utf8.encode(contents), mimeType: mimeType),
-          ],
-          fileNameOverrides: <String>[filename],
-        ),
+      final message = await _files.saveText(
+        fileName: fileName,
+        mimeType: mimeType,
+        contents: contents,
       );
-      if (mounted) {
-        _showMessage(context, '已打开系统分享面板。');
-      }
+      if (mounted) _showMessage(context, message);
     } catch (error) {
-      if (mounted) {
-        _showMessage(context, '导出失败：$error');
-      }
+      if (mounted) _showMessage(context, '导出失败：' + error.toString());
     } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _importJson(BuildContext context) async {
     setState(() => _busy = true);
     try {
-      const typeGroup = XTypeGroup(
-        label: 'TimeSand JSON',
-        extensions: <String>['json'],
-        mimeTypes: <String>['application/json'],
+      final raw = await _files.pickJson();
+      if (raw == null) return;
+      final preview = LocalDataTransfer.previewJson(
+        raw,
+        mode: ImportMode.merge,
       );
-      final file = await openFile(
-        acceptedTypeGroups: const <XTypeGroup>[typeGroup],
-      );
-      if (file == null) {
-        return;
-      }
-      final raw = await file.readAsString();
-      final preview = LocalDataTransfer.previewJson(raw);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       final mode = await _showImportPreview(context, preview);
-      if (mode == null) {
+      if (mode == null) return;
+      if (mode == ImportMode.replace &&
+          await _confirmReplacement(context) != true) {
         return;
       }
-      await LocalDataTransfer.importJson(widget.repository, raw, mode: mode);
+      await LocalDataTransfer.importJson(
+        widget.repository,
+        raw,
+        mode: mode,
+      );
       if (mounted) {
         _showMessage(
           context,
-          '导入成功：${preview.bottleCount} 个瓶子，${preview.entryCount} 条记录。',
+          '导入成功：' + preview.bottleCount.toString() +
+              ' 个瓶子，' + preview.entryCount.toString() + ' 条记录。',
         );
       }
     } on LocalDataTransferException catch (error) {
-      if (mounted) {
-        _showMessage(context, '导入失败：${error.message}');
-      }
+      if (mounted) _showMessage(context, '导入失败：' + error.message);
     } catch (error) {
-      if (mounted) {
-        _showMessage(context, '导入失败：$error');
-      }
+      if (mounted) _showMessage(context, '导入失败：' + error.toString());
     } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -180,10 +163,10 @@ class _DataManagementPageState extends State<DataManagementPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('格式版本：${preview.formatVersion}'),
-              Text('时区：${preview.timezone}'),
-              Text('瓶子：${preview.bottleCount} 个'),
-              Text('时间记录：${preview.entryCount} 条'),
+              Text('格式版本：' + preview.formatVersion.toString()),
+              Text('时区：' + preview.timezone),
+              Text('瓶子：' + preview.bottleCount.toString() + ' 个'),
+              Text('时间记录：' + preview.entryCount.toString() + ' 条'),
               const SizedBox(height: 16),
               DropdownButtonFormField<ImportMode>(
                 decoration: const InputDecoration(labelText: '导入模式'),
@@ -204,7 +187,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
               ),
               if (mode == ImportMode.replace)
                 Text(
-                  '覆盖恢复会删除当前瓶子和时间记录，此操作不可撤销。',
+                  '下一步还会再次确认。覆盖恢复会删除当前数据，此操作不可撤销。',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
             ],
@@ -216,10 +199,30 @@ class _DataManagementPageState extends State<DataManagementPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, mode),
-              child: const Text('确认导入'),
+              child: const Text('查看并确认'),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<bool?> _confirmReplacement(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('确认覆盖恢复？'),
+        content: const Text('当前瓶子和时间记录将被备份内容替换，原有数据不会自动保留。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('确认覆盖'),
+          ),
+        ],
       ),
     );
   }
