@@ -4,6 +4,7 @@ import '../../core/database/time_records_repository.dart';
 import '../../core/records/time_format.dart';
 import '../../core/records/time_models.dart';
 import '../../core/records/time_statistics.dart';
+import '../../core/time/day_window.dart';
 import 'history_filter.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -70,8 +71,8 @@ class _HistoryPageState extends State<HistoryPage> {
           return sum +
               HistoryFilter.intersectionDuration(
                 entry: entry,
-                start: _selectedDate!,
-                end: _selectedDate!.add(const Duration(days: 1)),
+                start: DayWindow.forDate(_selectedDate!).start,
+                end: DayWindow.forDate(_selectedDate!).end,
                 now: now,
               );
         }
