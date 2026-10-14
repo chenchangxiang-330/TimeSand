@@ -4,7 +4,6 @@ import '../../core/database/time_records_repository.dart';
 import '../../core/records/time_format.dart';
 import '../../core/records/time_models.dart';
 import '../../core/records/time_statistics.dart';
-import '../../core/time/day_window.dart';
 import 'history_filter.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -66,7 +65,30 @@ class _HistoryPageState extends State<HistoryPage> {
           );
     final total = filteredEntries.fold<Duration>(
       Duration.zero,
-      (sum, entry) => sum + entry.durationAt(now),
+      (sum, entry) {
+        if (_selectedDate != null) {
+          return sum +
+              HistoryFilter.intersectionDuration(
+                entry: entry,
+                start: _selectedDate!,
+                end: _selectedDate!.add(const Duration(days: 1)),
+                now: now,
+              );
+        }
+        if (_selectedMonth != null) {
+          return sum +
+              HistoryFilter.intersectionDuration(
+                entry: entry,
+                start: DateTime(_selectedMonth!.year, _selectedMonth!.month),
+                end: DateTime(
+                  _selectedMonth!.year,
+                  _selectedMonth!.month + 1,
+                ),
+                now: now,
+              );
+        }
+        return sum + entry.durationAt(now);
+      },
     );
 
     return Scaffold(
@@ -115,7 +137,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     const Card(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 36),
-                        child: Center(child: Text('当前筛选范围没有历史投入记录。')),
+                        child: Center(child: Text('还没有历史投入记录。')),
                       ),
                     )
                   else
