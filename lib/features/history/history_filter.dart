@@ -11,44 +11,43 @@ abstract final class HistoryFilter {
   }) {
     final referenceNow = now ?? DateTime.now();
     return entries.where((entry) {
-      if (bottleId != null && entry.bottleId != bottleId) {
+      if (bottleId != null && entry.bottleId != bottleId) return false;
+      if (date != null &&
+          intersectionDuration(
+                entry: entry,
+                start: DayWindow.forDate(date).start,
+                end: DayWindow.forDate(date).end,
+                now: referenceNow,
+              ) <=
+              Duration.zero) {
         return false;
       }
-      if (date != null && !_intersectsDay(entry, DayWindow.forDate(date), referenceNow)) {
-        return false;
-      }
-      if (month != null && !_intersectsMonth(entry, month, referenceNow)) {
+      if (month != null &&
+          intersectionDuration(
+                entry: entry,
+                start: DateTime(month.year, month.month),
+                end: DateTime(month.year, month.month + 1),
+                now: referenceNow,
+              ) <=
+              Duration.zero) {
         return false;
       }
       return true;
     }).toList(growable: false);
   }
 
-  static bool _intersectsDay(
-    TimeEntry entry,
-    DayWindow window,
-    DateTime now,
-  ) {
-    return _intersects(entry, window.start, window.end, now);
-  }
-
-  static bool _intersectsMonth(
-    TimeEntry entry,
-    DateTime month,
-    DateTime now,
-  ) {
-    final start = DateTime(month.year, month.month);
-    final end = DateTime(month.year, month.month + 1);
-    return _intersects(entry, start, end, now);
-  }
-
-  static bool _intersects(
-    TimeEntry entry,
-    DateTime windowStart,
-    DateTime windowEnd,
-    DateTime now,
-  ) {
-    final end = (entry.endedAt ?? now).isAfter(now) ? now : entry.endedAt ?? now;
-    return entry.startedAt.isBefore(windowEnd) && end.isAfter(windowStart);
+  static Duration intersectionDuration({
+    required TimeEntry entry,
+    required DateTime start,
+    required DateTime end,
+    required DateTime now,
+  }) {
+    final rawEnd = entry.endedAt ?? now;
+    final effectiveEnd = rawEnd.isAfter(now) ? now : rawEnd;
+    final effectiveStart =
+        entry.startedAt.isAfter(start) ? entry.startedAt : start;
+    final cappedEnd = effectiveEnd.isBefore(end) ? effectiveEnd : end;
+    if (!cappedEnd.isAfter(effectiveStart)) return Duration.zero;
+    return cappedEnd.difference(effectiveStart);
   }
 }
