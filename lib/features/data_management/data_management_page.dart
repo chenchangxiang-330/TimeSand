@@ -5,11 +5,7 @@ import '../../core/database/time_records_repository.dart';
 import 'backup_files.dart';
 
 class DataManagementPage extends StatefulWidget {
-  const DataManagementPage({
-    required this.repository,
-    this.files,
-    super.key,
-  });
+  const DataManagementPage({required this.repository, this.files, super.key});
 
   final TimeRecordsRepository repository;
   final BackupFiles? files;
@@ -128,16 +124,15 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await _confirmReplacement(context) != true) {
         return;
       }
-      await LocalDataTransfer.importJson(
-        widget.repository,
-        raw,
-        mode: mode,
-      );
+      await LocalDataTransfer.importJson(widget.repository, raw, mode: mode);
       if (mounted) {
         _showMessage(
           context,
-          '导入成功：' + preview.bottleCount.toString() +
-              ' 个瓶子，' + preview.entryCount.toString() + ' 条记录。',
+          '导入成功：' +
+              preview.bottleCount.toString() +
+              ' 个瓶子，' +
+              preview.entryCount.toString() +
+              ' 条记录。',
         );
       }
     } on LocalDataTransferException catch (error) {
