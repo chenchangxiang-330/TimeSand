@@ -6,6 +6,7 @@ import '../../core/records/time_models.dart';
 import '../../core/records/time_statistics.dart';
 import '../../core/time/day_window.dart';
 import 'history_filter.dart';
+import 'entry_editor_page.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({required this.repository, super.key});
@@ -94,7 +95,7 @@ class _HistoryPageState extends State<HistoryPage> {
             key: const ValueKey('manual-entry-button'),
             tooltip: '补录时间',
             icon: const Icon(Icons.edit_calendar_outlined),
-            onPressed: _bottles.isEmpty
+            onPressed: !_bottles.any((bottle) => !bottle.isArchived)
                 ? null
                 : () => _createManualEntry(context),
           ),
@@ -127,6 +128,15 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                     ),
                   ),
+                  if (_selectedBottleId != null)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('该瓶永久累计：' + formatRecordDuration(
+                        TimeStatistics.lifetime(
+                          bottleId: _selectedBottleId!, now: now, entries: _entries,
+                        ).total,
+                      )),
+                    ),
                   const SizedBox(height: 8),
                   if (filteredEntries.isEmpty)
                     const Card(
@@ -186,6 +196,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 DropdownButton<int?>(
                   key: const ValueKey('history-bottle-filter'),
+                  isExpanded: false,
                   value: _selectedBottleId,
                   hint: Text(bottleLabel),
                   items: [
@@ -196,7 +207,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     for (final bottle in _bottles)
                       DropdownMenuItem<int?>(
                         value: bottle.id,
-                        child: Text(bottle.name),
+                        child: SizedBox(width: 160, child: Text(bottle.name, overflow: TextOverflow.ellipsis)),
                       ),
                   ],
                   onChanged: (value) {
@@ -231,29 +242,30 @@ class _HistoryPageState extends State<HistoryPage> {
     DateTime now,
   ) {
     return Card(
-      child: ListTile(
-        leading: Icon(
-          entry.source == TimeEntrySource.active
-              ? Icons.timer_outlined
-              : Icons.edit_calendar_outlined,
-        ),
-        title: Text(names[entry.bottleId] ?? '已归档的时间之瓶'),
-        subtitle: Text(_formatInterval(entry)),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(names[entry.bottleId] ?? '已归档的时间之瓶',
+                style: Theme.of(context).textTheme.titleMedium),
+            Text(_formatInterval(entry)),
             Text(formatRecordDuration(entry.durationAt(now))),
-            IconButton(
-              key: ValueKey('edit-entry-${entry.id}'),
-              tooltip: '编辑记录',
-              onPressed: () => _editEntry(context, entry),
-              icon: const Icon(Icons.edit_outlined),
-            ),
-            IconButton(
-              key: ValueKey('delete-entry-${entry.id}'),
-              tooltip: '删除记录',
-              onPressed: () => _deleteEntry(entry),
-              icon: const Icon(Icons.delete_outline),
+            Wrap(
+              children: [
+                TextButton.icon(
+                  key: ValueKey('edit-entry-${entry.id}'),
+                  onPressed: entry.isActive ? null : () => _editEntry(context, entry),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text(entry.isActive ? '请先停止计时再编辑' : '编辑记录'),
+                ),
+                TextButton.icon(
+                  key: ValueKey('delete-entry-${entry.id}'),
+                  onPressed: () => _deleteEntry(entry),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('删除记录'),
+                ),
+              ],
             ),
           ],
         ),
@@ -268,7 +280,7 @@ class _HistoryPageState extends State<HistoryPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (date != null) {
+    if (date != null && mounted) {
       setState(() {
         _selectedDate = date;
         _selectedMonth = null;
@@ -277,17 +289,48 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _chooseMonth(BuildContext context) async {
-    final date = await showDatePicker(
+    var year = (_selectedMonth ?? DateTime.now()).year;
+    var month = (_selectedMonth ?? DateTime.now()).month;
+    final selected = await showDialog<DateTime>(
       context: context,
-      initialDate: _selectedMonth ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('选择月份'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButton<int>(
+                key: const ValueKey('history-year-choice'),
+                value: year,
+                items: [
+                  for (var y = 2000; y <= 2100; y++)
+                    DropdownMenuItem(value: y, child: Text('$y 年')),
+                ],
+                onChanged: (value) => setDialogState(() => year = value!),
+              ),
+              DropdownButton<int>(
+                key: const ValueKey('history-month-choice'),
+                value: month,
+                items: [
+                  for (var m = 1; m <= 12; m++)
+                    DropdownMenuItem(value: m, child: Text('$m 月')),
+                ],
+                onChanged: (value) => setDialogState(() => month = value!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('取消')),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, DateTime(year, month)),
+              child: const Text('选择'),
+            ),
+          ],
+        ),
+      ),
     );
-    if (date != null) {
-      setState(() {
-        _selectedMonth = DateTime(date.year, date.month);
-        _selectedDate = null;
-      });
+    if (selected != null && mounted) {
+      setState(() { _selectedMonth = selected; _selectedDate = null; });
     }
   }
 
@@ -310,25 +353,13 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _editEntry(BuildContext context, TimeEntry entry) async {
-    final result = await _showEntryDialog(
+    final changed = await Navigator.push<bool>(
       context,
-      initialStart: entry.startedAt,
-      initialEnd: entry.endedAt ?? DateTime.now(),
+      MaterialPageRoute(
+        builder: (_) => EntryEditorPage(repository: widget.repository, entry: entry),
+      ),
     );
-    if (result == null) {
-      return;
-    }
-    try {
-      await widget.repository.updateEntry(
-        id: entry.id!,
-        startedAt: result.$2,
-        endedAt: result.$3,
-      );
-      await _load();
-      _showMessage(context, '已更新时间记录，统计已重新计算。');
-    } catch (error) {
-      _showMessage(context, '更新失败：$error');
-    }
+    if (changed == true && mounted) await _load();
   }
 
   Future<void> _deleteEntry(TimeEntry entry) async {
@@ -374,7 +405,8 @@ class _HistoryPageState extends State<HistoryPage> {
     final endController = TextEditingController(
       text: _formatInput(initialEnd ?? now),
     );
-    Bottle selectedBottle = _bottles.first;
+    Bottle selectedBottle = _bottles.firstWhere((bottle) => !bottle.isArchived);
+    String? inputError;
     final result = await showDialog<(Bottle, DateTime, DateTime)>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -389,7 +421,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     initialValue: selectedBottle,
                     decoration: const InputDecoration(labelText: '时间之瓶'),
                     items: [
-                      for (final bottle in _bottles)
+                      for (final bottle in _bottles.where((bottle) => !bottle.isArchived))
                         DropdownMenuItem(
                           value: bottle,
                           child: Text(bottle.name),
@@ -408,6 +440,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     hintText: '2026-10-13 09:00',
                   ),
                 ),
+                if (inputError != null) Text(inputError!),
                 TextField(
                   controller: endController,
                   decoration: const InputDecoration(
@@ -428,11 +461,13 @@ class _HistoryPageState extends State<HistoryPage> {
                 try {
                   final start = DateTime.parse(startController.text.trim());
                   final end = DateTime.parse(endController.text.trim());
-                  if (!end.isAfter(start)) {
+                  if (!end.isAfter(start) || end.isAfter(DateTime.now())) {
+                    setDialogState(() => inputError = '结束时间必须晚于开始时间，且不能在未来。');
                     return;
                   }
                   Navigator.pop(dialogContext, (selectedBottle, start, end));
                 } on FormatException {
+                  setDialogState(() => inputError = '请输入有效日期和时间。');
                   return;
                 }
               },
@@ -455,7 +490,7 @@ class _HistoryPageState extends State<HistoryPage> {
       return '$date $startTime · 进行中';
     }
     final end = entry.endedAt!.toLocal();
-    return '$date $startTime - ${end.toString().substring(11, 16)}';
+    return '$date $startTime - ${_formatDate(end)} ${end.toString().substring(11, 16)}';
   }
 
   String _formatDate(DateTime value) {

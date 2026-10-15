@@ -6,6 +6,16 @@ import 'package:timesand/core/database/app_database.dart';
 void main() {
   setUpAll(sqfliteFfiInit);
 
+  test('fresh database includes v2 default and all indexes', () async {
+    final db = await TimeSandDatabase.open(path: inMemoryDatabasePath);
+    addTearDown(db.close);
+    expect(await db.database.getVersion(), 2);
+    final indexes = await db.database.rawQuery("SELECT name FROM sqlite_master WHERE type='index'");
+    expect(indexes.map((row) => row['name']), containsAll([
+      'time_entries_bottle_index', 'time_entries_started_index', 'one_active_time_entry',
+    ]));
+  });
+
   test('upgrades schema version 1 and preserves existing data', () async {
     final path =
         '${await databaseFactoryFfiNoIsolate.getDatabasesPath()}/timesand-migration-${DateTime.now().microsecondsSinceEpoch}.db';
@@ -42,7 +52,7 @@ void main() {
   test('failed migration rolls back without deleting existing records', () async {
     final path =
         '${await databaseFactoryFfiNoIsolate.getDatabasesPath()}/timesand-migration-failure-${DateTime.now().microsecondsSinceEpoch}.db';
-    final legacy = await _createLegacyDatabase(path, notesColumn: true);
+    final legacy = await _createLegacyDatabase(path);
     await legacy.insert('bottles', <String, Object?>{
       'name': '保留瓶子',
       'color': 0xFF9AC7C5,
@@ -53,7 +63,17 @@ void main() {
     await legacy.close();
 
     await expectLater(
-      TimeSandDatabase.open(path: path),
+      databaseFactoryFfiNoIsolate.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 2,
+          onUpgrade: (db, oldVersion, newVersion) async {
+            await TimeSandDatabase.migrate(db, oldVersion, newVersion);
+            await db.update('bottles', {'name': 'must roll back'});
+            await db.execute('INSERT INTO missing_table VALUES (1)');
+          },
+        ),
+      ),
       throwsA(isA<DatabaseException>()),
     );
 
@@ -61,7 +81,12 @@ void main() {
       path,
       options: OpenDatabaseOptions(version: 1),
     );
-    expect(await reopened.query('bottles'), hasLength(1));
+    expect((await reopened.query('bottles')).single['name'], '保留瓶子');
+    expect(
+      (await reopened.rawQuery('PRAGMA table_info(time_entries)'))
+          .any((column) => column['name'] == 'notes'),
+      isFalse,
+    );
     expect(
       (await reopened.rawQuery('PRAGMA user_version')).single['user_version'],
       1,

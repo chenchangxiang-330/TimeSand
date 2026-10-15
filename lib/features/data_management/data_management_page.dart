@@ -62,47 +62,30 @@ class _DataManagementPageState extends State<DataManagementPage> {
           ),
           if (_busy) ...[
             const SizedBox(height: 20),
-            const Center(child: CircularProgressIndicator()),
+            const Center(child: Text('正在处理…')),
           ],
         ],
       ),
     );
   }
 
-  Future<void> _exportJson(BuildContext context) async {
-    await _export(
-      context,
-      fileName: 'timesand-backup.json',
-      mimeType: 'application/json',
-      contents: await LocalDataTransfer.exportJson(widget.repository),
-    );
-  }
+  Future<void> _exportJson(BuildContext context) => _export(context, true);
+  Future<void> _exportCsv(BuildContext context) => _export(context, false);
 
-  Future<void> _exportCsv(BuildContext context) async {
-    await _export(
-      context,
-      fileName: 'timesand-time-entries.csv',
-      mimeType: 'text/csv',
-      contents: await LocalDataTransfer.exportCsv(widget.repository),
-    );
-  }
-
-  Future<void> _export(
-    BuildContext context, {
-    required String fileName,
-    required String mimeType,
-    required String contents,
-  }) async {
+  Future<void> _export(BuildContext context, bool json) async {
     setState(() => _busy = true);
     try {
+      final contents = json
+          ? await LocalDataTransfer.exportJson(widget.repository)
+          : await LocalDataTransfer.exportCsv(widget.repository);
       final message = await _files.saveText(
-        fileName: fileName,
-        mimeType: mimeType,
+        fileName: json ? 'timesand-backup.json' : 'timesand-time-entries.csv',
+        mimeType: json ? 'application/json' : 'text/csv',
         contents: contents,
       );
       if (mounted) _showMessage(context, message);
-    } catch (error) {
-      if (mounted) _showMessage(context, '导出失败：' + error.toString());
+    } catch (_) {
+      if (mounted) _showMessage(context, '导出失败，请检查保存位置或重试。');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -138,7 +121,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
     } on LocalDataTransferException catch (error) {
       if (mounted) _showMessage(context, '导入失败：' + error.message);
     } catch (error) {
-      if (mounted) _showMessage(context, '导入失败：' + error.toString());
+      if (mounted) _showMessage(context, '导入失败，原有数据保持完整。请检查备份格式或重试。');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

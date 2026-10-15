@@ -92,22 +92,21 @@ abstract final class TimeStatistics {
     final byMonth = <String, Duration>{};
 
     for (final entry in entries.where((entry) => entry.bottleId == bottleId)) {
-      final duration = entry.durationAt(now);
-      if (duration <= Duration.zero) {
-        continue;
-      }
-      total += duration;
+      final rawEnd = entry.endedAt ?? now;
+      final end = rawEnd.isAfter(now) ? now : rawEnd;
+      if (!end.isAfter(entry.startedAt)) continue;
+      total += end.difference(entry.startedAt);
       count++;
-      final localStart = entry.startedAt.toLocal();
-      final key =
-          localStart.year.toString().padLeft(4, '0') +
-          '-' +
-          localStart.month.toString().padLeft(2, '0');
-      byMonth.update(
-        key,
-        (current) => current + duration,
-        ifAbsent: () => duration,
-      );
+      var cursor = entry.startedAt.toLocal();
+      while (cursor.isBefore(end)) {
+        final monthEnd = DateTime(cursor.year, cursor.month + 1);
+        final segmentEnd = monthEnd.isBefore(end) ? monthEnd : end;
+        final key = cursor.year.toString().padLeft(4, '0') + '-' +
+            cursor.month.toString().padLeft(2, '0');
+        final duration = segmentEnd.difference(cursor);
+        byMonth.update(key, (value) => value + duration, ifAbsent: () => duration);
+        cursor = segmentEnd.toLocal();
+      }
     }
 
     return LifetimeTimeStats(

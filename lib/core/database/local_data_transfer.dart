@@ -53,6 +53,7 @@ class LocalDataBundle {
       'format_version': formatVersion,
       'exported_at': exportedAt.toUtc().toIso8601String(),
       'timezone': timezone,
+      'timezone_offset_minutes': exportedAt.timeZoneOffset.inMinutes,
       'database': <String, Object?>{'schema_version': schemaVersion},
       'bottles': bottles.map(_bottleToJson).toList(growable: false),
       'time_entries': entries.map(_entryToJson).toList(growable: false),
@@ -80,6 +81,7 @@ class LocalDataBundle {
           ? null
           : entry.endedAt!.difference(entry.startedAt).inSeconds,
       'source': entry.source.value,
+      'notes': entry.notes,
       'created_at': entry.createdAt.toUtc().toIso8601String(),
       'updated_at': entry.updatedAt.toUtc().toIso8601String(),
     };
@@ -93,14 +95,19 @@ abstract final class LocalDataTransfer {
     TimeRecordsRepository repository, {
     DateTime? exportedAt,
   }) async {
-    return LocalDataBundle(
-      formatVersion: formatVersion,
-      exportedAt: exportedAt ?? DateTime.now(),
-      timezone: DateTime.now().timeZoneName,
-      schemaVersion: TimeSandDatabase.currentSchemaVersion,
-      bottles: await repository.fetchBottles(includeArchived: true),
-      entries: await repository.fetchEntries(),
-    );
+    final timestamp = exportedAt ?? DateTime.now();
+    return repository.database.database.transaction((txn) async {
+      final bottles = await txn.query('bottles', orderBy: 'id');
+      final entries = await txn.query('time_entries', orderBy: 'id');
+      return LocalDataBundle(
+        formatVersion: formatVersion,
+        exportedAt: timestamp,
+        timezone: timestamp.timeZoneName,
+        schemaVersion: TimeSandDatabase.currentSchemaVersion,
+        bottles: bottles.map(Bottle.fromMap).toList(),
+        entries: entries.map(TimeEntry.fromMap).toList(),
+      );
+    });
   }
 
   static Future<String> exportJson(
@@ -148,6 +155,9 @@ abstract final class LocalDataTransfer {
   }
 
   static LocalDataBundle parseJson(String raw) {
+    if (utf8.encode(raw).length > 20 * 1024 * 1024) {
+      throw const LocalDataTransferException('备份文件不能超过 20 MiB。');
+    }
     final decoded = jsonDecode(raw);
     if (decoded is! Map<String, dynamic>) {
       throw const LocalDataTransferException('导入文件必须是 JSON 对象。');
@@ -164,6 +174,13 @@ abstract final class LocalDataTransfer {
         ? _requiredInt(database, 'schema_version')
         : 0;
 
+    if (schemaVersion < 1 ||
+        schemaVersion > TimeSandDatabase.currentSchemaVersion) {
+      throw const LocalDataTransferException('缺少或不支持的数据库版本。');
+    }
+    if (timezone.trim().isEmpty) {
+      throw const LocalDataTransferException('时区信息不能为空。');
+    }
     final bottlesRaw = decoded['bottles'];
     final entriesRaw = decoded['time_entries'];
     if (bottlesRaw is! List || entriesRaw is! List) {
@@ -177,6 +194,7 @@ abstract final class LocalDataTransfer {
         throw const LocalDataTransferException('瓶子记录格式无效。');
       }
       final id = _requiredInt(value, 'id');
+      if (id <= 0) throw const LocalDataTransferException('ID 必须为正整数。');
       if (!bottleIds.add(id)) {
         throw LocalDataTransferException('瓶子 ID 重复：$id。');
       }
@@ -184,11 +202,15 @@ abstract final class LocalDataTransfer {
       if (name.isEmpty) {
         throw const LocalDataTransferException('瓶子名称不能为空。');
       }
+      final color = _requiredInt(value, 'color');
+      if (color < 0 || color > 0xFFFFFFFF) {
+        throw const LocalDataTransferException('颜色必须为 32 位 ARGB 值。');
+      }
       bottles.add(
         Bottle(
           id: id,
           name: name,
-          color: _requiredInt(value, 'color'),
+          color: color,
           createdAt: _requiredDate(value, 'created_at'),
           updatedAt: _requiredDate(value, 'updated_at'),
           isArchived: _requiredBool(value, 'is_archived'),
@@ -203,6 +225,7 @@ abstract final class LocalDataTransfer {
         throw const LocalDataTransferException('时间记录格式无效。');
       }
       final id = _requiredInt(value, 'id');
+      if (id <= 0) throw const LocalDataTransferException('ID 必须为正整数。');
       if (!entryIds.add(id)) {
         throw LocalDataTransferException('时间记录 ID 重复：$id。');
       }
@@ -211,6 +234,10 @@ abstract final class LocalDataTransfer {
         throw LocalDataTransferException('时间记录引用了未知瓶子：$bottleId。');
       }
       final startedAt = _requiredDate(value, 'started_at');
+      if (!value.containsKey('ended_at') ||
+          !value.containsKey('duration_seconds')) {
+        throw const LocalDataTransferException('缺少结束时间或时长字段。');
+      }
       final endedAt = _optionalDate(value['ended_at']);
       final source = TimeEntrySourceCodec.parse(
         _requiredString(value, 'source'),
@@ -224,6 +251,10 @@ abstract final class LocalDataTransfer {
       final suppliedDuration = value['duration_seconds'];
       if (suppliedDuration != null && suppliedDuration is! int) {
         throw const LocalDataTransferException('duration_seconds 格式无效。');
+      }
+      if ((endedAt == null && suppliedDuration != null) ||
+          (endedAt != null && suppliedDuration == null)) {
+        throw const LocalDataTransferException('结束时间与时长字段不一致。');
       }
       if (suppliedDuration is int &&
           endedAt != null &&
@@ -240,6 +271,9 @@ abstract final class LocalDataTransfer {
               ? null
               : endedAt.difference(startedAt).inSeconds,
           source: source,
+          notes: value.containsKey('notes')
+              ? _requiredString(value, 'notes')
+              : '',
           createdAt: _requiredDate(value, 'created_at'),
           updatedAt: _requiredDate(value, 'updated_at'),
         ),
@@ -259,7 +293,7 @@ abstract final class LocalDataTransfer {
 
   static ImportPreview previewJson(
     String raw, {
-    ImportMode mode = ImportMode.replace,
+    ImportMode mode = ImportMode.merge,
   }) {
     final bundle = parseJson(raw);
     return ImportPreview(
@@ -277,12 +311,14 @@ abstract final class LocalDataTransfer {
     required ImportMode mode,
   }) async {
     final bundle = parseJson(raw);
-    final existingEntries = await repository.fetchEntries();
-    if (mode == ImportMode.merge) {
-      _validateNoOverlaps(<TimeEntry>[...existingEntries, ...bundle.entries]);
-    }
-
     await repository.database.database.transaction((txn) async {
+      if (mode == ImportMode.merge) {
+        final existing = await txn.query('time_entries');
+        _validateNoOverlaps([
+          ...existing.map(TimeEntry.fromMap),
+          ...bundle.entries,
+        ]);
+      }
       if (mode == ImportMode.replace) {
         await txn.delete('time_entries');
         await txn.delete('bottles');
@@ -313,6 +349,7 @@ abstract final class LocalDataTransfer {
               ? null
               : endedAt.difference(entry.startedAt).inSeconds,
           'source': entry.source.value,
+          'notes': entry.notes,
           'created_at': entry.createdAt.toUtc().toIso8601String(),
           'updated_at': entry.updatedAt.toUtc().toIso8601String(),
         });
@@ -357,15 +394,20 @@ abstract final class LocalDataTransfer {
       throw const LocalDataTransferException('时间字段格式无效。');
     }
     try {
-      return DateTime.parse(value).toLocal();
+      final parsed = DateTime.parse(value);
+      if (!parsed.isUtc || parsed.toIso8601String() != value) {
+        throw const FormatException('Expected canonical UTC ISO-8601');
+      }
+      return parsed.toLocal();
     } on FormatException {
       throw const LocalDataTransferException('时间字段格式无效。');
     }
   }
 
   static String _csvCell(Object? value) {
-    final text = value?.toString() ?? '';
-    if (text.contains(',') || text.contains('"') || text.contains('\n')) {
+    var text = value?.toString() ?? '';
+    if (RegExp(r'^\s*[=+@-]').hasMatch(text)) text = "'" + text;
+    if (text.contains(',') || text.contains('"') || text.contains('\n') || text.contains('\r')) {
       return '"${text.replaceAll('"', '""')}"';
     }
     return text;
@@ -374,26 +416,13 @@ abstract final class LocalDataTransfer {
   static void _validateNoOverlaps(Iterable<TimeEntry> entries) {
     final sorted = entries.toList()
       ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
-    var activeCount = 0;
-    for (var i = 0; i < sorted.length; i++) {
+    for (var i = 1; i < sorted.length; i++) {
+      final previous = sorted[i - 1];
       final current = sorted[i];
-      if (current.isActive) {
-        activeCount++;
-        if (activeCount > 1) {
-          throw const LocalDataTransferException('导入文件包含多个活动计时器。');
-        }
-      }
-      for (var j = i + 1; j < sorted.length; j++) {
-        if (_overlaps(current, sorted[j])) {
-          throw const LocalDataTransferException('导入文件包含重叠时间记录。');
-        }
+      if (previous.endedAt == null ||
+          current.startedAt.isBefore(previous.endedAt!)) {
+        throw const LocalDataTransferException('导入内容与已有记录重叠或包含多个活动计时器。');
       }
     }
-  }
-
-  static bool _overlaps(TimeEntry a, TimeEntry b) {
-    final aEnd = a.endedAt ?? DateTime.now();
-    final bEnd = b.endedAt ?? DateTime.now();
-    return a.startedAt.isBefore(bEnd) && b.startedAt.isBefore(aEnd);
   }
 }

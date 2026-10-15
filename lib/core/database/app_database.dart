@@ -21,17 +21,18 @@ class TimeSandDatabase {
           await db.execute('PRAGMA foreign_keys = ON');
         },
         onCreate: (db, version) async {
-          await _createSchemaV2(db);
+          await _createSchemaV1(db);
+          await migrate(db, 1, version);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
-          await _upgradeSchema(db, oldVersion, newVersion);
+          await migrate(db, oldVersion, newVersion);
         },
       ),
     );
     return TimeSandDatabase._(database);
   }
 
-  static Future<void> _createSchemaV2(Database db) async {
+  static Future<void> _createSchemaV1(Database db) async {
     await db.execute('''
       CREATE TABLE bottles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +55,6 @@ class TimeSandDatabase {
           CHECK (source IN ('active', 'manual')),
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        notes TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (bottle_id) REFERENCES bottles(id)
           ON DELETE RESTRICT,
         CHECK (ended_at IS NULL OR ended_at > started_at),
@@ -76,16 +76,27 @@ class TimeSandDatabase {
     );
   }
 
-  static Future<void> _upgradeSchema(
-    Database db,
+  // sqflite wraps onCreate/onUpgrade and user_version in one transaction.
+  // Each key is the destination schema version. Never mutate earlier steps.
+  static const migrations = <int, List<String>>{
+    2: [
+      "ALTER TABLE time_entries ADD COLUMN notes TEXT NOT NULL DEFAULT ''",
+    ],
+  };
+
+  static Future<void> migrate(
+    DatabaseExecutor db,
     int oldVersion,
     int newVersion,
   ) async {
-    if (oldVersion < 2 && newVersion >= 2) {
-      await db.execute(
-        "ALTER TABLE time_entries "
-        "ADD COLUMN notes TEXT NOT NULL DEFAULT ''",
-      );
+    for (var version = oldVersion + 1; version <= newVersion; version++) {
+      final statements = migrations[version];
+      if (statements == null) {
+        throw StateError('Missing database migration to version $version');
+      }
+      for (final statement in statements) {
+        await db.execute(statement);
+      }
     }
   }
 

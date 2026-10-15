@@ -499,13 +499,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  void _openDataManagement(BuildContext context) {
-    Navigator.push<void>(
+  Future<void> _openDataManagement(BuildContext context) async {
+    await Navigator.push<void>(
       context,
       MaterialPageRoute<void>(
         builder: (_) => DataManagementPage(repository: widget.repository),
       ),
     );
+    if (mounted) await _load();
   }
 
   void _openBottle(BuildContext context, Bottle bottle) {

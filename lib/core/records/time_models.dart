@@ -77,6 +77,7 @@ class TimeEntry {
     this.endedAt,
     this.durationSeconds,
     required this.source,
+    this.notes = '',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -87,6 +88,7 @@ class TimeEntry {
   final DateTime? endedAt;
   final int? durationSeconds;
   final TimeEntrySource source;
+  final String notes;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -106,6 +108,7 @@ class TimeEntry {
       'ended_at': endedAt?.toUtc().toIso8601String(),
       'duration_seconds': durationSeconds,
       'source': source.value,
+      'notes': notes,
       'created_at': createdAt.toUtc().toIso8601String(),
       'updated_at': updatedAt.toUtc().toIso8601String(),
     };
@@ -120,6 +123,7 @@ class TimeEntry {
       endedAt: endedAt == null ? null : DateTime.parse(endedAt).toLocal(),
       durationSeconds: map['duration_seconds'] as int?,
       source: TimeEntrySourceCodec.parse(map['source'] as String),
+      notes: map['notes'] as String? ?? '',
       createdAt: DateTime.parse(map['created_at'] as String).toLocal(),
       updatedAt: DateTime.parse(map['updated_at'] as String).toLocal(),
     );
