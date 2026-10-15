@@ -67,6 +67,7 @@ class _GlassBottlePainter extends CustomPainter {
   final double fill;
 
   static const _white = Color(0xFFFFFFFF);
+  static const _warm = Color(0xFFFFF0D7);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -76,21 +77,22 @@ class _GlassBottlePainter extends CustomPainter {
       ..moveTo(34, 15)
       ..lineTo(64, 15)
       ..lineTo(64, 32)
-      ..cubicTo(64, 38, 82, 41, 84, 56)
-      ..lineTo(84, 117)
-      ..cubicTo(84, 128, 76, 132, 67, 132)
-      ..lineTo(31, 132)
-      ..cubicTo(22, 132, 14, 128, 14, 117)
-      ..lineTo(14, 56)
-      ..cubicTo(16, 41, 34, 38, 34, 32)
+      ..cubicTo(64, 40, 83, 41, 85, 58)
+      ..cubicTo(87, 73, 86, 99, 84, 117)
+      ..cubicTo(83, 128, 76, 132, 66, 132)
+      ..lineTo(32, 132)
+      ..cubicTo(22, 132, 15, 128, 14, 117)
+      ..cubicTo(12, 99, 11, 73, 13, 58)
+      ..cubicTo(15, 41, 34, 40, 34, 32)
       ..close();
-    const bounds = Rect.fromLTWH(14, 15, 70, 117);
-    final tint = Color.lerp(color, _white, 0.45)!;
+    const bounds = Rect.fromLTWH(11, 15, 76, 117);
+    final tint = Color.lerp(color, _white, 0.42)!;
+    final edge = Color.lerp(color, const Color(0xFF5C86A3), 0.5)!;
     canvas.drawOval(
       const Rect.fromLTWH(11, 130, 76, 8),
       Paint()
         ..shader = RadialGradient(
-          colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0)],
+          colors: [edge.withValues(alpha: 0.22), edge.withValues(alpha: 0)],
         ).createShader(const Rect.fromLTWH(11, 130, 76, 8)),
     );
     canvas.drawPath(
@@ -98,12 +100,13 @@ class _GlassBottlePainter extends CustomPainter {
       Paint()
         ..shader = LinearGradient(
           colors: [
-            tint.withValues(alpha: 0.24),
-            _white.withValues(alpha: 0.025),
-            color.withValues(alpha: 0.07),
-            tint.withValues(alpha: 0.2),
+            tint.withValues(alpha: 0.32),
+            _white.withValues(alpha: 0.22),
+            _white.withValues(alpha: 0.035),
+            color.withValues(alpha: 0.05),
+            tint.withValues(alpha: 0.26),
           ],
-          stops: const [0, 0.26, 0.7, 1],
+          stops: const [0, 0.15, 0.43, 0.72, 1],
         ).createShader(bounds),
     );
 
@@ -111,7 +114,7 @@ class _GlassBottlePainter extends CustomPainter {
     canvas.clipPath(glass);
     if (fill > 0) {
       final surface = 129 - 81 * fill;
-      final sandBounds = Rect.fromLTRB(14, surface, 84, 133);
+      final sandBounds = Rect.fromLTRB(11, surface, 87, 133);
       canvas.drawRect(
         sandBounds,
         Paint()
@@ -119,23 +122,56 @@ class _GlassBottlePainter extends CustomPainter {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color.lerp(color, _white, 0.45)!,
-              color,
-              Color.lerp(color, const Color(0xFF243647), 0.2)!,
+              Color.lerp(color, _white, 0.60)!,
+              Color.lerp(color, _white, 0.12)!,
+              Color.lerp(color, const Color(0xFF334E68), 0.22)!,
+              Color.lerp(color, _white, 0.24)!,
             ],
-            stops: const [0, 0.48, 1],
+            stops: const [0, 0.3, 0.76, 1],
           ).createShader(sandBounds),
       );
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(49, surface), width: 70, height: 8),
-        Paint()..color = Color.lerp(color, _white, 0.58)!,
+      final glow = Rect.fromCenter(
+        center: Offset(37, surface + 6),
+        width: 65,
+        height: 28,
       );
-      canvas.drawLine(
-        Offset(23, surface + 2),
-        Offset(68, surface + 2),
+      canvas.drawOval(
+        glow,
         Paint()
-          ..color = _white.withValues(alpha: 0.35)
-          ..strokeWidth = 0.7,
+          ..shader = RadialGradient(
+            colors: [_white.withValues(alpha: 0.35), _white.withValues(alpha: 0)],
+          ).createShader(glow),
+      );
+      for (var i = 0; i < 65; i++) {
+        canvas.drawCircle(
+          Offset(
+            14 + ((i * 47 + 13) % 101) / 101 * 70,
+            surface + ((i * 71 + 31) % 103) / 103 * (132 - surface),
+          ),
+          i.isEven ? 0.42 : 0.27,
+          Paint()
+            ..color = i.isEven
+                ? _white.withValues(alpha: 0.5)
+                : edge.withValues(alpha: 0.25),
+        );
+      }
+      final surfaceBounds = Rect.fromCenter(
+        center: Offset(49, surface),
+        width: 72,
+        height: 8,
+      );
+      canvas.drawOval(
+        surfaceBounds,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.lerp(color, _warm, 0.72)!,
+              Color.lerp(color, _white, 0.5)!,
+              color,
+            ],
+          ).createShader(surfaceBounds),
       );
     }
     canvas.restore();
@@ -143,60 +179,98 @@ class _GlassBottlePainter extends CustomPainter {
     canvas.drawPath(
       glass,
       Paint()
-        ..color = tint.withValues(alpha: 0.65)
+        ..color = edge.withValues(alpha: 0.30)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8,
+    );
+    canvas.drawPath(
+      glass,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            _white.withValues(alpha: 0.9),
+            tint.withValues(alpha: 0.86),
+            _white.withValues(alpha: 0.88),
+            edge.withValues(alpha: 0.65),
+          ],
+          stops: const [0, 0.3, 0.7, 1],
+        ).createShader(bounds)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.1,
     );
+    final highlight = Path()
+      ..moveTo(38, 24)
+      ..lineTo(38, 33)
+      ..cubicTo(36, 44, 20, 46, 19, 61)
+      ..cubicTo(18, 75, 18, 96, 20, 110);
     canvas.drawPath(
-      Path()
-        ..moveTo(37, 23)
-        ..lineTo(37, 32)
-        ..cubicTo(37, 42, 20, 45, 20, 59)
-        ..lineTo(20, 111),
-      Paint()
-        ..color = _white.withValues(alpha: 0.62)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.3
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(78, 60)
-        ..lineTo(78, 111)
-        ..quadraticBezierTo(78, 124, 67, 126),
-      Paint()
-        ..color = _white.withValues(alpha: 0.28)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.3
-        ..strokeCap = StrokeCap.round,
-    );
-    const mouth = Rect.fromLTWH(30, 10, 38, 11);
-    canvas.drawOval(
-      mouth,
+      highlight,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            _white.withValues(alpha: 0.58),
-            tint.withValues(alpha: 0.16),
-            _white.withValues(alpha: 0.35),
+            _white.withValues(alpha: 0.12),
+            _white.withValues(alpha: 0.9),
+            _warm.withValues(alpha: 0.7),
+            _white.withValues(alpha: 0.1),
           ],
+          stops: const [0, 0.22, 0.53, 1],
+        ).createShader(highlight.getBounds())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(79, 62)
+        ..cubicTo(81, 83, 80, 104, 78, 116)
+        ..quadraticBezierTo(76, 125, 64, 127),
+      Paint()
+        ..color = _white.withValues(alpha: 0.55)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..strokeCap = StrokeCap.round,
+    );
+
+    const mouth = Rect.fromLTWH(29, 9, 40, 12);
+    canvas.drawOval(
+      mouth.translate(0, 2.5),
+      Paint()
+        ..color = edge.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
+    final rim = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addOval(mouth)
+      ..addOval(const Rect.fromLTWH(34, 12, 30, 5));
+    canvas.drawPath(
+      rim,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_white, _warm.withValues(alpha: 0.78), tint],
+          stops: const [0, 0.45, 1],
         ).createShader(mouth),
     );
     canvas.drawOval(
       mouth,
       Paint()
-        ..color = tint.withValues(alpha: 0.8)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
-    );
-    canvas.drawOval(
-      const Rect.fromLTWH(35, 12, 28, 6),
-      Paint()
-        ..color = color.withValues(alpha: 0.24)
+        ..color = _white.withValues(alpha: 0.95)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.8,
+    );
+    canvas.drawArc(
+      const Rect.fromLTWH(17, 122, 64, 8),
+      0,
+      3.141592653589793,
+      false,
+      Paint()
+        ..color = _white.withValues(alpha: 0.58)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
     );
     canvas.restore();
   }
