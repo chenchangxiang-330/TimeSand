@@ -204,7 +204,10 @@ class _GlassHourglassPainter extends CustomPainter {
       const Rect.fromLTWH(27, 294, 166, 17),
       Paint()
         ..shader = RadialGradient(
-          colors: [_shadow.withValues(alpha: 0.18), _shadow.withValues(alpha: 0)],
+          colors: [
+            _shadow.withValues(alpha: 0.18),
+            _shadow.withValues(alpha: 0),
+          ],
         ).createShader(const Rect.fromLTWH(27, 294, 166, 17)),
     );
     canvas.drawPath(
@@ -236,10 +239,7 @@ class _GlassHourglassPainter extends CustomPainter {
         stops: [0, 0.55, 1],
       ).createShader(bodyBounds);
     if (progress < 1) {
-      canvas.drawRect(
-        Rect.fromLTRB(35, upperSurface, 185, _neck),
-        sandPaint,
-      );
+      canvas.drawRect(Rect.fromLTRB(35, upperSurface, 185, _neck), sandPaint);
       _sandSurface(canvas, upperSurface, surfaceRadius);
     }
     if (progress > 0) {
@@ -258,7 +258,10 @@ class _GlassHourglassPainter extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_white.withValues(alpha: 0.7), _white.withValues(alpha: 0.1)],
+            colors: [
+              _white.withValues(alpha: 0.7),
+              _white.withValues(alpha: 0.1),
+            ],
           ).createShader(stream),
       );
       for (var i = 0; i < 7; i++) {

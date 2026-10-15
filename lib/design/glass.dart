@@ -23,13 +23,21 @@ class GlassPanel extends StatelessWidget {
     final content = DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [tint ?? const Color(0xC7F6FBFF), tint ?? const Color(0x8CE9F4FC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            tint ?? const Color(0xC7F6FBFF),
+            tint ?? const Color(0x8CE9F4FC),
+          ],
         ),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: const Color(0xCFFFFFFF), width: 1.2),
         boxShadow: const [
-          BoxShadow(color: Color(0x15234870), blurRadius: 24, offset: Offset(0, 8)),
+          BoxShadow(
+            color: Color(0x15234870),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: Padding(padding: padding, child: child),
@@ -37,7 +45,10 @@ class GlassPanel extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: blur
-          ? BackdropFilter(filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), child: content)
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: content,
+            )
           : content,
     );
   }
@@ -54,7 +65,8 @@ class ScenicBackground extends StatelessWidget {
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [Color(0xFFA7CBE7), Color(0xFFF8E4CD), Color(0xFF3A92BA)],
             stops: [0, .55, 1],
           ),
@@ -64,7 +76,8 @@ class ScenicBackground extends StatelessWidget {
         child: ExcludeSemantics(
           child: Image.asset(
             'assets/scenes/coastal-light.png',
-            fit: BoxFit.cover, alignment: const Alignment(0, .1),
+            fit: BoxFit.cover,
+            alignment: const Alignment(0, .1),
             filterQuality: FilterQuality.medium,
             errorBuilder: (_, error, stackTrace) => const SizedBox.shrink(),
           ),
@@ -73,7 +86,8 @@ class ScenicBackground extends StatelessWidget {
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [Color(0x35FFFFFF), Color(0x08FFFFFF), Color(0x183B739B)],
           ),
         ),
@@ -84,7 +98,12 @@ class ScenicBackground extends StatelessWidget {
 }
 
 class GlassScaffold extends StatelessWidget {
-  const GlassScaffold({required this.title, required this.body, this.actions, super.key});
+  const GlassScaffold({
+    required this.title,
+    required this.body,
+    this.actions,
+    super.key,
+  });
   final String title;
   final Widget body;
   final List<Widget>? actions;
@@ -92,7 +111,10 @@ class GlassScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ScenicBackground(
     child: Scaffold(
-      appBar: AppBar(title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis), actions: actions),
+      appBar: AppBar(
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: actions,
+      ),
       body: SafeArea(child: body),
     ),
   );

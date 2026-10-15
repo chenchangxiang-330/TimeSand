@@ -103,12 +103,20 @@ class _StatisticsPageState extends State<StatisticsPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final daily = TimeStatistics.forDate(date: _date, now: _now, entries: _entries);
+    final daily = TimeStatistics.forDate(
+      date: _date,
+      now: _now,
+      entries: _entries,
+    );
     final selectedBottles = _bottles.toList()
-      ..sort((a, b) => daily.forBottle(b.id!).compareTo(daily.forBottle(a.id!)));
-    final ratio = daily.elapsed.inMicroseconds == 0 ? 0.0 :
-        (daily.recorded.inMicroseconds / daily.elapsed.inMicroseconds)
-            .clamp(0.0, 1.0).toDouble();
+      ..sort(
+        (a, b) => daily.forBottle(b.id!).compareTo(daily.forBottle(a.id!)),
+      );
+    final ratio = daily.elapsed.inMicroseconds == 0
+        ? 0.0
+        : (daily.recorded.inMicroseconds / daily.elapsed.inMicroseconds)
+              .clamp(0.0, 1.0)
+              .toDouble();
     return GlassScaffold(
       title: '时间统计',
       actions: [
@@ -147,14 +155,20 @@ class _StatisticsPageState extends State<StatisticsPage>
                                   crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     OutlinedButton.icon(
-                                      key: const ValueKey('statistics-date-filter'),
+                                      key: const ValueKey(
+                                        'statistics-date-filter',
+                                      ),
                                       onPressed: _chooseDate,
-                                      icon: const Icon(Icons.calendar_month_outlined),
+                                      icon: const Icon(
+                                        Icons.calendar_month_outlined,
+                                      ),
                                       label: Text(_dateLabel(_date)),
                                     ),
                                     if (_selectedDate != null)
                                       TextButton(
-                                        onPressed: () => setState(() => _selectedDate = null),
+                                        onPressed: () => setState(
+                                          () => _selectedDate = null,
+                                        ),
                                         child: const Text('回到今天'),
                                       ),
                                   ],
@@ -164,7 +178,9 @@ class _StatisticsPageState extends State<StatisticsPage>
                                 const SizedBox(height: 6),
                                 Text(
                                   formatRecordDuration(daily.recorded),
-                                  key: const ValueKey('statistics-daily-recorded'),
+                                  key: const ValueKey(
+                                    'statistics-daily-recorded',
+                                  ),
                                   style: theme.textTheme.headlineLarge,
                                 ),
                                 const SizedBox(height: 20),
@@ -178,18 +194,29 @@ class _StatisticsPageState extends State<StatisticsPage>
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                Text('占当天已流逝时间的 ${(ratio * 100).toStringAsFixed(1)}%'),
+                                Text(
+                                  '占当天已流逝时间的 ${(ratio * 100).toStringAsFixed(1)}%',
+                                ),
                                 const SizedBox(height: 22),
                                 Wrap(
                                   spacing: 36,
                                   runSpacing: 18,
                                   children: [
-                                    _metric('时间海洋', daily.unallocated,
-                                        const ValueKey('statistics-ocean')),
-                                    _metric('当天已流逝', daily.elapsed,
-                                        const ValueKey('statistics-elapsed')),
-                                    _metric('永久总投入', _lifetime(),
-                                        const ValueKey('statistics-lifetime')),
+                                    _metric(
+                                      '时间海洋',
+                                      daily.unallocated,
+                                      const ValueKey('statistics-ocean'),
+                                    ),
+                                    _metric(
+                                      '当天已流逝',
+                                      daily.elapsed,
+                                      const ValueKey('statistics-elapsed'),
+                                    ),
+                                    _metric(
+                                      '永久总投入',
+                                      _lifetime(),
+                                      const ValueKey('statistics-lifetime'),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
@@ -207,7 +234,10 @@ class _StatisticsPageState extends State<StatisticsPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(_error!),
-                                  TextButton(onPressed: _load, child: const Text('重试')),
+                                  TextButton(
+                                    onPressed: _load,
+                                    child: const Text('重试'),
+                                  ),
                                 ],
                               ),
                             ),
@@ -242,7 +272,8 @@ class _StatisticsPageState extends State<StatisticsPage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Container(
                                           width: 12,
@@ -256,7 +287,10 @@ class _StatisticsPageState extends State<StatisticsPage>
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Text(
-                                            bottle.name + (bottle.isArchived ? ' · 已归档' : ''),
+                                            bottle.name +
+                                                (bottle.isArchived
+                                                    ? ' · 已归档'
+                                                    : ''),
                                             style: theme.textTheme.titleMedium,
                                           ),
                                         ),
@@ -270,19 +304,26 @@ class _StatisticsPageState extends State<StatisticsPage>
                                         _metric(
                                           '当天投入',
                                           daily.forBottle(bottle.id!),
-                                          ValueKey('statistics-bottle-${bottle.id}'),
+                                          ValueKey(
+                                            'statistics-bottle-${bottle.id}',
+                                          ),
                                         ),
                                         _metric(
                                           '永久累计',
                                           _lifetime(bottleId: bottle.id),
-                                          ValueKey('statistics-total-${bottle.id}'),
+                                          ValueKey(
+                                            'statistics-total-${bottle.id}',
+                                          ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
                                     TextButton.icon(
                                       onPressed: () => _openBottle(bottle),
-                                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                                      icon: const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 18,
+                                      ),
                                       label: const Text('查看成长瓶'),
                                     ),
                                   ],
@@ -323,10 +364,17 @@ class _StatisticsPageState extends State<StatisticsPage>
     ];
     final totals = [
       for (final day in days)
-        TimeStatistics.forDate(date: day, now: _now, entries: _entries).recorded,
+        TimeStatistics.forDate(
+          date: day,
+          now: _now,
+          entries: _entries,
+        ).recorded,
     ];
-    final peak = totals.fold<int>(0, (value, total) =>
-        total.inMicroseconds > value ? total.inMicroseconds : value);
+    final peak = totals.fold<int>(
+      0,
+      (value, total) =>
+          total.inMicroseconds > value ? total.inMicroseconds : value,
+    );
     final color = Theme.of(context).colorScheme.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +395,10 @@ class _StatisticsPageState extends State<StatisticsPage>
                     borderRadius: BorderRadius.circular(14),
                     onTap: () => _openHistory(date: days[i]),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                       child: Column(
                         children: [
                           SizedBox(
@@ -356,8 +407,11 @@ class _StatisticsPageState extends State<StatisticsPage>
                               alignment: Alignment.bottomCenter,
                               child: Container(
                                 width: 28,
-                                height: peak == 0 ? 1 :
-                                    (totals[i].inMicroseconds / peak * 104).clamp(1.0, 104.0).toDouble(),
+                                height: peak == 0
+                                    ? 1
+                                    : (totals[i].inMicroseconds / peak * 104)
+                                          .clamp(1.0, 104.0)
+                                          .toDouble(),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   gradient: LinearGradient(
@@ -405,7 +459,9 @@ class _StatisticsPageState extends State<StatisticsPage>
     final date = await showDatePicker(
       context: context,
       initialDate: initial,
-      firstDate: DateTime(earliestYear < initial.year ? earliestYear : initial.year),
+      firstDate: DateTime(
+        earliestYear < initial.year ? earliestYear : initial.year,
+      ),
       lastDate: now,
     );
     if (date != null && mounted) setState(() => _selectedDate = date);
@@ -415,7 +471,10 @@ class _StatisticsPageState extends State<StatisticsPage>
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) => HistoryPage(repository: widget.repository, initialDate: date ?? _date),
+        builder: (_) => HistoryPage(
+          repository: widget.repository,
+          initialDate: date ?? _date,
+        ),
       ),
     );
     if (mounted) await _load();
@@ -425,7 +484,8 @@ class _StatisticsPageState extends State<StatisticsPage>
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) => BottleDetailPage(repository: widget.repository, bottle: bottle),
+        builder: (_) =>
+            BottleDetailPage(repository: widget.repository, bottle: bottle),
       ),
     );
     if (mounted) await _load();

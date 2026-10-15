@@ -113,13 +113,11 @@ void main() {
     });
   }
 
-  testWidgets('glass navigation opens the existing history page', (tester) async {
+  testWidgets('glass navigation opens the existing history page', (
+    tester,
+  ) async {
     await _seedBottles(repository, count: 2);
-    await _pumpHome(
-      tester,
-      repository,
-      size: const Size(390, 844),
-    );
+    await _pumpHome(tester, repository, size: const Size(390, 844));
     final history = find.byKey(const ValueKey('nav-history'));
     await _reveal(tester, history);
     await tester.tap(history);
@@ -168,9 +166,9 @@ Future<void> _pumpHome(
     MaterialApp(
       theme: AppTheme.light,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(textScale),
-        ),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: HomePage(

@@ -90,10 +90,7 @@ class _GlassBottlePainter extends CustomPainter {
       const Rect.fromLTWH(11, 130, 76, 8),
       Paint()
         ..shader = RadialGradient(
-          colors: [
-            color.withValues(alpha: 0.18),
-            color.withValues(alpha: 0),
-          ],
+          colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0)],
         ).createShader(const Rect.fromLTWH(11, 130, 76, 8)),
     );
     canvas.drawPath(
@@ -130,11 +127,7 @@ class _GlassBottlePainter extends CustomPainter {
           ).createShader(sandBounds),
       );
       canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(49, surface),
-          width: 70,
-          height: 8,
-        ),
+        Rect.fromCenter(center: Offset(49, surface), width: 70, height: 8),
         Paint()..color = Color.lerp(color, _white, 0.58)!,
       );
       canvas.drawLine(

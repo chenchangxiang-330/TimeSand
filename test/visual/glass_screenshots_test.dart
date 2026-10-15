@@ -32,75 +32,70 @@ void main() {
     'phone': const Size(390, 844),
     'desktop': const Size(1440, 960),
   }.entries) {
-    testWidgets(
-      'renders actual glass homepage at ${viewport.key} size',
-      (tester) async {
-        tester.view.devicePixelRatio = 1;
-        tester.view.physicalSize = viewport.value;
-        await tester.binding.setSurfaceSize(viewport.value);
-        addTearDown(() async {
-          tester.view.resetDevicePixelRatio();
-          tester.view.resetPhysicalSize();
-          await tester.binding.setSurfaceSize(null);
-        });
+    testWidgets('renders actual glass homepage at ${viewport.key} size', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = viewport.value;
+      await tester.binding.setSurfaceSize(viewport.value);
+      addTearDown(() async {
+        tester.view.resetDevicePixelRatio();
+        tester.view.resetPhysicalSize();
+        await tester.binding.setSurfaceSize(null);
+      });
 
-        final database = await TimeSandDatabase.open(path: inMemoryDatabasePath);
-        addTearDown(database.close);
-        final repository = TimeRecordsRepository(database);
-        await _seedScreenshotData(repository);
-        final boundaryKey = GlobalKey();
+      final database = await TimeSandDatabase.open(path: inMemoryDatabasePath);
+      addTearDown(database.close);
+      final repository = TimeRecordsRepository(database);
+      await _seedScreenshotData(repository);
+      final boundaryKey = GlobalKey();
 
-        await tester.pumpWidget(
-          RepaintBoundary(
-            key: boundaryKey,
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light,
-              home: HomePage(
-                repository: repository,
-                enableTicker: false,
-                clock: () => _sampleNow,
-              ),
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: boundaryKey,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            home: HomePage(
+              repository: repository,
+              enableTicker: false,
+              clock: () => _sampleNow,
             ),
           ),
-        );
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull);
-        expect(find.byType(HomePage), findsOneWidget);
-        expect(
-          find.byKey(const ValueKey('primary-timer-button')),
-          findsOneWidget,
-        );
-        expect(await repository.fetchBottles(), hasLength(4));
-        expect(await repository.fetchEntries(), hasLength(5));
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('primary-timer-button')),
+        findsOneWidget,
+      );
+      expect(await repository.fetchBottles(), hasLength(4));
+      expect(await repository.fetchEntries(), hasLength(5));
 
-        final boundary =
-            boundaryKey.currentContext!.findRenderObject()!
-                as RenderRepaintBoundary;
-        await tester.runAsync(() async {
-          final image = await boundary.toImage(pixelRatio: 1);
-          try {
-            expect(image.width, viewport.value.width.toInt());
-            expect(image.height, viewport.value.height.toInt());
-            final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-            expect(bytes, isNotNull);
-            final directory = Directory('build/ui-screenshots');
-            await directory.create(recursive: true);
-            await File('${directory.path}/${viewport.key}.png').writeAsBytes(
-              bytes!.buffer.asUint8List(
-                bytes.offsetInBytes,
-                bytes.lengthInBytes,
-              ),
-              flush: true,
-            );
-          } finally {
-            image.dispose();
-          }
-        });
-        await tester.pumpWidget(const SizedBox.shrink());
-      },
-      skip: !_screenshotsEnabled,
-    );
+      final boundary =
+          boundaryKey.currentContext!.findRenderObject()!
+              as RenderRepaintBoundary;
+      await tester.runAsync(() async {
+        final image = await boundary.toImage(pixelRatio: 1);
+        try {
+          expect(image.width, viewport.value.width.toInt());
+          expect(image.height, viewport.value.height.toInt());
+          final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+          expect(bytes, isNotNull);
+          final directory = Directory('build/ui-screenshots');
+          await directory.create(recursive: true);
+          await File('${directory.path}/${viewport.key}.png').writeAsBytes(
+            bytes!.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+            flush: true,
+          );
+        } finally {
+          image.dispose();
+        }
+      });
+      await tester.pumpWidget(const SizedBox.shrink());
+    }, skip: !_screenshotsEnabled);
   }
 }
 

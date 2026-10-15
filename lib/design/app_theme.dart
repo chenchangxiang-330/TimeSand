@@ -6,11 +6,16 @@ abstract final class AppTheme {
   static const muted = Color(0xFF4C6981);
 
   static ThemeData get light {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: blue,
-      brightness: Brightness.light,
-      surface: const Color(0xFFF2F8FC),
-    ).copyWith(primary: blue, onSurface: ink, secondary: const Color(0xFF47A9B1));
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: blue,
+          brightness: Brightness.light,
+          surface: const Color(0xFFF2F8FC),
+        ).copyWith(
+          primary: blue,
+          onSurface: ink,
+          secondary: const Color(0xFF47A9B1),
+        );
     final border = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(24),
       side: const BorderSide(color: Color(0xBFFFFFFF)),
@@ -22,7 +27,11 @@ abstract final class AppTheme {
       fontFamilyFallback: const ['NotoSansSC', 'PingFang SC', 'sans-serif'],
       scaffoldBackgroundColor: Colors.transparent,
       textTheme: const TextTheme(
-        displaySmall: TextStyle(color: ink, fontWeight: FontWeight.w500, letterSpacing: -1),
+        displaySmall: TextStyle(
+          color: ink,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -1,
+        ),
         headlineMedium: TextStyle(color: ink, fontWeight: FontWeight.w500),
         headlineSmall: TextStyle(color: ink, fontWeight: FontWeight.w500),
         titleLarge: TextStyle(color: ink, fontWeight: FontWeight.w600),
@@ -38,18 +47,22 @@ abstract final class AppTheme {
         elevation: 0,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xB8F5FAFE), elevation: 0,
-        margin: const EdgeInsets.symmetric(vertical: 6), shape: border,
+        color: const Color(0xB8F5FAFE),
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: border,
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: const Color(0xFFF0F7FC), shape: border,
+        backgroundColor: const Color(0xFFF0F7FC),
+        shape: border,
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Color(0xFFF0F7FC),
         showDragHandle: true,
       ),
       inputDecorationTheme: InputDecorationTheme(
-        filled: true, fillColor: const Color(0xEFFFFFFF),
+        filled: true,
+        fillColor: const Color(0xEFFFFFFF),
         contentPadding: const EdgeInsets.all(16),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       ),
@@ -57,14 +70,18 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(48, 48),
           side: const BorderSide(color: Color(0x66287AC5)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(

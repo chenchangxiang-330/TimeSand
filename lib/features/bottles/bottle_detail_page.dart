@@ -43,7 +43,8 @@ class _BottleDetailPageState extends State<BottleDetailPage>
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && ModalRoute.of(context)?.isCurrent == true &&
+      if (mounted &&
+          ModalRoute.of(context)?.isCurrent == true &&
           _entries.any((entry) => entry.isActive)) {
         setState(() => _now = DateTime.now());
       }
@@ -113,15 +114,27 @@ class _BottleDetailPageState extends State<BottleDetailPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = Color(widget.bottle.color);
-    final today = TimeStatistics.forDate(date: _now, now: _now, entries: _entries);
+    final today = TimeStatistics.forDate(
+      date: _now,
+      now: _now,
+      entries: _entries,
+    );
     final months = _monthlyTotals();
-    final lifetime = months.values.fold<Duration>(Duration.zero, (sum, value) => sum + value);
+    final lifetime = months.values.fold<Duration>(
+      Duration.zero,
+      (sum, value) => sum + value,
+    );
     final monthKeys = months.keys.toList()..sort((a, b) => b.compareTo(a));
-    final peak = months.values.fold<int>(0, (max, duration) =>
-        duration.inMicroseconds > max ? duration.inMicroseconds : max);
-    final todayShare = today.window.total.inMicroseconds == 0 ? 0.0 :
-        (today.recorded.inMicroseconds / today.window.total.inMicroseconds)
-            .clamp(0.0, 1.0).toDouble();
+    final peak = months.values.fold<int>(
+      0,
+      (max, duration) =>
+          duration.inMicroseconds > max ? duration.inMicroseconds : max,
+    );
+    final todayShare = today.window.total.inMicroseconds == 0
+        ? 0.0
+        : (today.recorded.inMicroseconds / today.window.total.inMicroseconds)
+              .clamp(0.0, 1.0)
+              .toDouble();
 
     return GlassScaffold(
       title: '永久成长瓶',
@@ -142,7 +155,11 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                           GlassPanel(
                             child: Column(
                               children: [
-                                GlassBottle(color: color, fill: todayShare, height: 160),
+                                GlassBottle(
+                                  color: color,
+                                  fill: todayShare,
+                                  height: 160,
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
                                   widget.bottle.name,
@@ -150,8 +167,10 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                                   style: theme.textTheme.headlineSmall,
                                 ),
                                 const SizedBox(height: 6),
-                                const Text('水每天重新开始，投入的时间始终留下。',
-                                    textAlign: TextAlign.center),
+                                const Text(
+                                  '水每天重新开始，投入的时间始终留下。',
+                                  textAlign: TextAlign.center,
+                                ),
                                 const SizedBox(height: 24),
                                 Text(
                                   formatRecordDuration(lifetime),
@@ -166,9 +185,14 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                                   spacing: 12,
                                   runSpacing: 8,
                                   children: [
-                                    Text('今天 ${formatRecordDuration(today.recorded)}'),
-                                    Text('创建于 ${_dateLabel(widget.bottle.createdAt)}'),
-                                    if (widget.bottle.isArchived) const Text('已归档'),
+                                    Text(
+                                      '今天 ${formatRecordDuration(today.recorded)}',
+                                    ),
+                                    Text(
+                                      '创建于 ${_dateLabel(widget.bottle.createdAt)}',
+                                    ),
+                                    if (widget.bottle.isArchived)
+                                      const Text('已归档'),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
@@ -187,7 +211,10 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(_error!),
-                                  TextButton(onPressed: _load, child: const Text('重试')),
+                                  TextButton(
+                                    onPressed: _load,
+                                    child: const Text('重试'),
+                                  ),
                                 ],
                               ),
                             ),
@@ -213,19 +240,28 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                                       spacing: 12,
                                       runSpacing: 4,
                                       children: [
-                                        Text(key, style: theme.textTheme.titleSmall),
-                                        Text(formatRecordDuration(months[key]!)),
+                                        Text(
+                                          key,
+                                          style: theme.textTheme.titleSmall,
+                                        ),
+                                        Text(
+                                          formatRecordDuration(months[key]!),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: LinearProgressIndicator(
-                                        value: peak == 0 ? 0 :
-                                            months[key]!.inMicroseconds / peak,
+                                        value: peak == 0
+                                            ? 0
+                                            : months[key]!.inMicroseconds /
+                                                  peak,
                                         minHeight: 7,
                                         color: color,
-                                        backgroundColor: color.withValues(alpha: 0.12),
+                                        backgroundColor: color.withValues(
+                                          alpha: 0.12,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 20),
@@ -243,7 +279,10 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                               Text('投入记录', style: theme.textTheme.titleLarge),
                               TextButton.icon(
                                 onPressed: _openHistory,
-                                icon: const Icon(Icons.history_rounded, size: 18),
+                                icon: const Icon(
+                                  Icons.history_rounded,
+                                  size: 18,
+                                ),
                                 label: const Text('管理历史'),
                               ),
                             ],
@@ -266,7 +305,9 @@ class _BottleDetailPageState extends State<BottleDetailPage>
                                     Text(_intervalLabel(entry)),
                                     const SizedBox(height: 10),
                                     Text(
-                                      formatRecordDuration(entry.durationAt(_now)),
+                                      formatRecordDuration(
+                                        entry.durationAt(_now),
+                                      ),
                                       style: theme.textTheme.titleLarge,
                                     ),
                                   ],
@@ -287,7 +328,9 @@ class _BottleDetailPageState extends State<BottleDetailPage>
   Future<void> _openHistory() async {
     await Navigator.push<void>(
       context,
-      MaterialPageRoute(builder: (_) => HistoryPage(repository: widget.repository)),
+      MaterialPageRoute(
+        builder: (_) => HistoryPage(repository: widget.repository),
+      ),
     );
     if (mounted) await _load();
   }
