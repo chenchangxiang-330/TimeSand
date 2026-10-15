@@ -182,11 +182,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         repository: widget.repository,
         initialDate: _historyDate,
         revision: _dataRevision,
+        onChanged: _load,
       );
     if (_tab == 2)
       return StatisticsPage(
         repository: widget.repository,
         revision: _dataRevision,
+        onChanged: _load,
       );
     if (_tab == 3) return _settings();
     return RefreshIndicator(
