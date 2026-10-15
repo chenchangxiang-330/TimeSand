@@ -120,9 +120,10 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                       subtitle: Text(
                         '${filteredEntries.length} 条记录 · '
-                        '筛选范围 ${formatRecordDuration(total)}' +
-                        (dayStats == null ? '' :
-                          '\n海洋 ${formatRecordDuration(dayStats.unallocated)}'),
+                                '筛选范围 ${formatRecordDuration(total)}' +
+                            (dayStats == null
+                                ? ''
+                                : '\n海洋 ${formatRecordDuration(dayStats.unallocated)}'),
                       ),
                     ),
                   ),
@@ -448,7 +449,10 @@ class _HistoryPageState extends State<HistoryPage> {
                       ))
                         DropdownMenuItem(
                           value: bottle,
-                          child: Text(bottle.name, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            bottle.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                     ],
                     onChanged: (value) {

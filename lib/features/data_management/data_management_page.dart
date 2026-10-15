@@ -191,7 +191,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-          scrollable: true,
+        scrollable: true,
         title: const Text('确认覆盖恢复？'),
         content: const Text('当前瓶子和时间记录将被备份内容替换，原有数据不会自动保留。'),
         actions: [

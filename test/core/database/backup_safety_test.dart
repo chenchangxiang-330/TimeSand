@@ -224,30 +224,46 @@ void main() {
       expect(await repository.fetchEntries(), isEmpty);
     },
   );
-  test('future active and completed intervals cannot enter the database', () async {
-    final entry = (backup['time_entries'] as List).single;
-    entry['started_at'] = '2090-01-01T00:00:00.000Z';
-    entry['ended_at'] = '2090-01-01T01:00:00.000Z';
-    final original = await database.database.query('time_entries');
-    await expectLater(
-      LocalDataTransfer.importJson(repository, jsonEncode(backup), mode: ImportMode.replace),
-      throwsException,
-    );
-    entry['ended_at'] = null;
-    entry['duration_seconds'] = null;
-    entry['source'] = 'active';
-    await expectLater(
-      LocalDataTransfer.importJson(repository, jsonEncode(backup), mode: ImportMode.replace),
-      throwsException,
-    );
-    expect(await database.database.query('time_entries'), original);
-  });
+  test(
+    'future active and completed intervals cannot enter the database',
+    () async {
+      final entry = (backup['time_entries'] as List).single;
+      entry['started_at'] = '2090-01-01T00:00:00.000Z';
+      entry['ended_at'] = '2090-01-01T01:00:00.000Z';
+      final original = await database.database.query('time_entries');
+      await expectLater(
+        LocalDataTransfer.importJson(
+          repository,
+          jsonEncode(backup),
+          mode: ImportMode.replace,
+        ),
+        throwsException,
+      );
+      entry['ended_at'] = null;
+      entry['duration_seconds'] = null;
+      entry['source'] = 'active';
+      await expectLater(
+        LocalDataTransfer.importJson(
+          repository,
+          jsonEncode(backup),
+          mode: ImportMode.replace,
+        ),
+        throwsException,
+      );
+      expect(await database.database.query('time_entries'), original);
+    },
+  );
 
   test('schema 2 missing notes is refused but schema 1 gets a default', () {
     ((backup['time_entries'] as List).single as Map).remove('notes');
-    expect(() => LocalDataTransfer.parseJson(jsonEncode(backup)), throwsException);
+    expect(
+      () => LocalDataTransfer.parseJson(jsonEncode(backup)),
+      throwsException,
+    );
     backup['database'] = {'schema_version': 1};
-    expect(LocalDataTransfer.parseJson(jsonEncode(backup)).entries.single.notes, '');
+    expect(
+      LocalDataTransfer.parseJson(jsonEncode(backup)).entries.single.notes,
+      '',
+    );
   });
-
 }

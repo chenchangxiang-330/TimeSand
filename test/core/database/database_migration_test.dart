@@ -124,7 +124,7 @@ Future<Database> _createLegacyDatabase(String path) async {
       version: 1,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: (db, version) async {
-    await db.execute('''
+        await db.execute('''
       CREATE TABLE bottles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -135,7 +135,7 @@ Future<Database> _createLegacyDatabase(String path) async {
           CHECK (is_archived IN (0, 1))
       )
     ''');
-    await db.execute('''
+        await db.execute('''
       CREATE TABLE time_entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         bottle_id INTEGER NOT NULL,
@@ -152,19 +152,19 @@ Future<Database> _createLegacyDatabase(String path) async {
         CHECK (duration_seconds IS NULL OR duration_seconds >= 0)
       )
     ''');
-    await db.execute(
-      'CREATE INDEX time_entries_bottle_index '
-      'ON time_entries (bottle_id)',
-    );
-    await db.execute(
-      'CREATE INDEX time_entries_started_index '
-      'ON time_entries (started_at, ended_at)',
-    );
-    await db.execute(
-      "CREATE UNIQUE INDEX one_active_time_entry "
-      "ON time_entries (source) "
-      "WHERE source = 'active' AND ended_at IS NULL",
-    );
+        await db.execute(
+          'CREATE INDEX time_entries_bottle_index '
+          'ON time_entries (bottle_id)',
+        );
+        await db.execute(
+          'CREATE INDEX time_entries_started_index '
+          'ON time_entries (started_at, ended_at)',
+        );
+        await db.execute(
+          "CREATE UNIQUE INDEX one_active_time_entry "
+          "ON time_entries (source) "
+          "WHERE source = 'active' AND ended_at IS NULL",
+        );
       },
     ),
   );

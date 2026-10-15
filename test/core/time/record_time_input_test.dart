@@ -11,11 +11,19 @@ void main() {
   });
   test('rejects impossible dates, times and offsets without normalization', () {
     for (final input in [
-      '2020-02-30 09:00', '2021-02-29 09:00', '2020-13-01 09:00',
-      '2020-01-01 24:00', '2020-01-01 09:60',
-      '2020-01-01T09:00:00+24:00', '2020-01-01T09:00:00+08:60',
+      '2020-02-30 09:00',
+      '2021-02-29 09:00',
+      '2020-13-01 09:00',
+      '2020-01-01 24:00',
+      '2020-01-01 09:60',
+      '2020-01-01T09:00:00+24:00',
+      '2020-01-01T09:00:00+08:60',
     ]) {
-      expect(() => parseRecordTime(input), throwsFormatException, reason: input);
+      expect(
+        () => parseRecordTime(input),
+        throwsFormatException,
+        reason: input,
+      );
     }
   });
   test('editing requires seconds and explicit time zone', () {

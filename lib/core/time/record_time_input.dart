@@ -20,15 +20,16 @@ DateTime parseRecordTime(String value, {bool requireOffset = false}) {
       date.hour == parts[3] &&
       date.minute == parts[4] &&
       date.second == parts[5];
-  if (!matches(DateTime.utc(
-    parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
-  ))) {
+  if (!matches(
+    DateTime.utc(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]),
+  )) {
     throw const FormatException('日期或时间不存在。');
   }
   final zone = match.group(8);
-  if (zone != null && zone != 'Z' &&
+  if (zone != null &&
+      zone != 'Z' &&
       (int.parse(zone.substring(1, 3)) > 23 ||
-       int.parse(zone.substring(4, 6)) > 59)) {
+          int.parse(zone.substring(4, 6)) > 59)) {
     throw const FormatException('时区偏移无效。');
   }
   final parsed = DateTime.parse(input);
