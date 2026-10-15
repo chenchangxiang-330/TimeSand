@@ -139,7 +139,10 @@ class _GlassBottlePainter extends CustomPainter {
         glow,
         Paint()
           ..shader = RadialGradient(
-            colors: [_white.withValues(alpha: 0.35), _white.withValues(alpha: 0)],
+            colors: [
+              _white.withValues(alpha: 0.35),
+              _white.withValues(alpha: 0),
+            ],
           ).createShader(glow),
       );
       for (var i = 0; i < 65; i++) {
