@@ -3,10 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:timesand/core/database/app_database.dart';
 import 'package:timesand/core/database/time_records_repository.dart';
+import 'package:timesand/core/records/time_entry_rules.dart';
 import 'package:timesand/design/app_theme.dart';
 import 'package:timesand/features/bottles/bottle_detail_page.dart';
 import 'package:timesand/features/history/history_page.dart';
 import 'package:timesand/features/home/home_page.dart';
+import 'package:timesand/features/hourglass/hourglass_placeholder.dart';
+import 'package:timesand/features/statistics/statistics_page.dart';
 
 final _sampleNow = DateTime(2026, 10, 15, 15, 20);
 
@@ -146,6 +149,143 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+  testWidgets('statistics navigation opens actual stored data', (tester) async {
+    await _seedBottles(repository, count: 2);
+    await _pumpHome(tester, repository, size: const Size(390, 844));
+    await tester.tap(find.byKey(const ValueKey('nav-statistics')));
+    await tester.pumpAndSettle();
+    expect(find.byType(StatisticsPage), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('statistics-lifetime')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const ValueKey('nav-home')));
+    await tester.pumpAndSettle();
+    expect(find.byType(StatisticsPage), findsNothing);
+    expect(
+      find.byKey(const ValueKey('primary-timer-button')),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('settings navigation exposes working bottle management', (
+    tester,
+  ) async {
+    await _seedBottles(repository, count: 1);
+    await _pumpHome(tester, repository, size: const Size(390, 844));
+    await tester.tap(find.byKey(const ValueKey('nav-settings')));
+    await tester.pumpAndSettle();
+    expect(find.text('我的 · 本地时光'), findsOneWidget);
+    final manage = find.text('管理时间之瓶');
+    await _reveal(tester, manage);
+    await tester.tap(manage);
+    await tester.pumpAndSettle();
+    expect(find.text('我的时间之瓶'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create-bottle-button')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('selection starts the chosen bottle and stop persists the interval', (
+    tester,
+  ) async {
+    final first = await repository.createBottle(name: '阅读', color: 0xFF8EBCA8);
+    final second = await repository.createBottle(name: '创作', color: 0xFFC6A1D1);
+    await _pumpHome(
+      tester,
+      repository,
+      size: const Size(390, 844),
+      clock: DateTime.now,
+    );
+    final select = find.byKey(ValueKey('select-bottle-${second.id}'));
+    await _reveal(tester, select);
+    await tester.tap(select);
+    await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(select).isSelected, isTrue);
+
+    final primary = find.byKey(const ValueKey('primary-timer-button'));
+    await _reveal(tester, primary);
+    await tester.tap(primary);
+    await tester.pumpAndSettle();
+    final active = await repository.fetchActiveEntry();
+    expect(active, isNotNull);
+    expect(active!.bottleId, second.id);
+    expect(find.byKey(ValueKey('start-${first.id}')), findsNothing);
+    expect(find.byKey(ValueKey('start-${second.id}')), findsNothing);
+
+    // Changing selection while recording cannot silently replace the timer.
+    final selectOther = find.byKey(ValueKey('select-bottle-${first.id}'));
+    await _reveal(tester, selectOther);
+    await tester.tap(selectOther);
+    await tester.pumpAndSettle();
+    expect((await repository.fetchActiveEntry())!.id, active.id);
+    await expectLater(
+      repository.startTimer(bottleId: first.id!),
+      throwsA(isA<ActiveTimerConflictException>()),
+    );
+    expect((await repository.fetchEntries()), hasLength(1));
+
+    final stop = find.byKey(const ValueKey('stop-timer-button'));
+    await _reveal(tester, stop);
+    await tester.tap(stop);
+    await tester.pumpAndSettle();
+    expect(await repository.fetchActiveEntry(), isNull);
+    final restored = (await TimeRecordsRepository(database).fetchEntries()).single;
+    expect(restored.id, active.id);
+    expect(restored.bottleId, second.id);
+    expect(restored.startedAt, active.startedAt);
+    expect(restored.endedAt!.isAfter(restored.startedAt), isTrue);
+    expect(
+      restored.durationSeconds,
+      restored.endedAt!.difference(restored.startedAt).inSeconds,
+    );
+
+    // Rebuild the actual homepage against the same SQLite database.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _pumpHome(
+      tester,
+      TimeRecordsRepository(database),
+      size: const Size(390, 844),
+      clock: DateTime.now,
+    );
+    expect(find.byKey(const ValueKey('stop-timer-button')), findsNothing);
+    expect(find.text('没有正在进行的计时'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('system reduced motion stops decorative frames on the homepage', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      repository,
+      size: const Size(390, 844),
+      enableTicker: true,
+      disableAnimations: true,
+    );
+    final hourglass = tester.widget<HourglassPlaceholder>(
+      find.byType(HourglassPlaceholder),
+    );
+    expect(hourglass.animate, isTrue);
+    expect(tester.binding.transientCallbackCount, 0);
+    expect(tester.binding.hasScheduledFrame, isFalse);
+
+    // The real-time clock may update each second; it must not restart the
+    // decorative animation or leave a continuous frame stream scheduled.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+    expect(tester.binding.transientCallbackCount, 0);
+    expect(tester.binding.hasScheduledFrame, isFalse);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
 }
 
 Future<void> _pumpHome(
@@ -153,6 +293,9 @@ Future<void> _pumpHome(
   TimeRecordsRepository repository, {
   required Size size,
   double textScale = 1,
+  bool enableTicker = false,
+  bool disableAnimations = false,
+  DateTime Function()? clock,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -168,13 +311,16 @@ Future<void> _pumpHome(
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
           context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        ).copyWith(
+          textScaler: TextScaler.linear(textScale),
+          disableAnimations: disableAnimations,
+        ),
         child: child!,
       ),
       home: HomePage(
         repository: repository,
-        enableTicker: false,
-        clock: () => _sampleNow,
+        enableTicker: enableTicker,
+        clock: clock ?? () => _sampleNow,
       ),
     ),
   );
