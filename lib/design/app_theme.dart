@@ -37,7 +37,7 @@ abstract final class AppTheme {
         titleLarge: TextStyle(color: ink, fontWeight: FontWeight.w600),
         titleMedium: TextStyle(color: ink, fontWeight: FontWeight.w500),
         bodyLarge: TextStyle(color: ink, height: 1.5),
-        bodyMedium: TextStyle(color: muted, height: 1.45),
+        bodyMedium: TextStyle(color: ink, height: 1.45),
         labelLarge: TextStyle(color: ink, fontWeight: FontWeight.w500),
       ),
       appBarTheme: const AppBarTheme(

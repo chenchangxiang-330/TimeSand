@@ -389,7 +389,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   );
 
   Widget _bottleShelf(bool desktop) => GlassPanel(
-    padding: EdgeInsets.all(desktop ? 20 : 14),
+    padding: EdgeInsets.all(desktop ? 16 : 14),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -435,13 +435,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
           )
         else
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final bottle in _bottles) _bottleTile(bottle, desktop),
-              ],
+          LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: Row(
+                  mainAxisAlignment: desktop
+                      ? MainAxisAlignment.spaceEvenly
+                      : MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final bottle in _bottles) _bottleTile(bottle, desktop),
+                  ],
+                ),
+              ),
             ),
           ),
         if (_bottles.isNotEmpty)
@@ -464,7 +472,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ? 0.0
         : duration.inMicroseconds / _today.recorded.inMicroseconds;
     return Container(
-      width: desktop ? 148 : 122,
+      width: 148,
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
         color: selected ? const Color(0x55D6EDFF) : Colors.transparent,
@@ -493,7 +501,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     GlassBottle(
                       color: Color(bottle.color),
                       fill: fill,
-                      height: desktop ? 128 : 100,
+                      height: desktop ? 110 : 100,
                       icon: _bottleIcon(bottle.name),
                     ),
                     const SizedBox(height: 6),
@@ -558,6 +566,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Widget _ocean(bool desktop) => GlassPanel(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
     tint: const Color(0xB7D7F0FC),
     child: LayoutBuilder(
       builder: (context, constraints) {
@@ -586,6 +595,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     key: const ValueKey('primary-timer-button'),
                     width: 240,
                     child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xDDF3FAFF),
+                        foregroundColor: AppTheme.blue,
+                        minimumSize: const Size(48, 56),
+                        side: const BorderSide(color: Colors.white),
+                        shape: const StadiumBorder(),
+                      ),
                       onPressed: _busy ? null : _primaryAction,
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text('开始记录'),
