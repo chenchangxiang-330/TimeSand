@@ -46,8 +46,8 @@ class GlassBottle extends StatelessWidget {
                     size: safeHeight * 0.19,
                     color: Color.lerp(
                       visibleColor,
-                      const Color(0xFFECF8FF),
-                      0.65,
+                      const Color(0xFF193A58),
+                      0.45,
                     ),
                   ),
                 ),
