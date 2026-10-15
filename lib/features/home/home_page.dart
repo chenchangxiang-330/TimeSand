@@ -688,33 +688,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ],
     ),
   );
-  Widget _navigationItem(String label, IconData icon, int tab, String key, {bool calendar = false}) =>
-      Expanded(
-        child: Semantics(
-          selected: (_tab == tab && (!calendar || _historyDate != null)),
-          button: true,
-          label: label,
-          child: TextButton(
-            key: ValueKey(key),
-            onPressed: () => _navigate(tab, calendar: calendar),
-            style: TextButton.styleFrom(
-              foregroundColor: (_tab == tab && (!calendar || _historyDate != null)) ? AppTheme.blue : AppTheme.muted,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-              backgroundColor: (_tab == tab && (!calendar || _historyDate != null))
-                  ? const Color(0x55CBE5FC)
-                  : Colors.transparent,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 25),
-                const SizedBox(height: 2),
-                Text(label, style: const TextStyle(fontSize: 11)),
-              ],
-            ),
-          ),
+  Widget _navigationItem(
+    String label,
+    IconData icon,
+    int tab,
+    String key, {
+    bool calendar = false,
+  }) => Expanded(
+    child: Semantics(
+      selected: (_tab == tab && (!calendar || _historyDate != null)),
+      button: true,
+      label: label,
+      child: TextButton(
+        key: ValueKey(key),
+        onPressed: () => _navigate(tab, calendar: calendar),
+        style: TextButton.styleFrom(
+          foregroundColor: (_tab == tab && (!calendar || _historyDate != null))
+              ? AppTheme.blue
+              : AppTheme.muted,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          backgroundColor: (_tab == tab && (!calendar || _historyDate != null))
+              ? const Color(0x55CBE5FC)
+              : Colors.transparent,
         ),
-      );
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 25),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 11)),
+          ],
+        ),
+      ),
+    ),
+  );
   Widget _sidebar() => Padding(
     padding: const EdgeInsets.fromLTRB(14, 14, 0, 14),
     child: GlassPanel(
