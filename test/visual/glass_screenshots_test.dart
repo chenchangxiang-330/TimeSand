@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -68,32 +67,29 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(HomePage), findsOneWidget);
       expect(
-        find.byKey(const ValueKey('primary-timer-button')),
+        find.byKey(const ValueKey('stop-timer-button')),
         findsOneWidget,
       );
       expect(await repository.fetchBottles(), hasLength(4));
       expect(await repository.fetchEntries(), hasLength(5));
 
-      final boundary =
-          boundaryKey.currentContext!.findRenderObject()!
-              as RenderRepaintBoundary;
-      await tester.runAsync(() async {
-        final image = await boundary.toImage(pixelRatio: 1);
-        try {
-          expect(image.width, viewport.value.width.toInt());
-          expect(image.height, viewport.value.height.toInt());
-          final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-          expect(bytes, isNotNull);
-          final directory = Directory('build/ui-screenshots');
-          await directory.create(recursive: true);
-          await File('${directory.path}/${viewport.key}.png').writeAsBytes(
-            bytes!.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
-            flush: true,
-          );
-        } finally {
-          image.dispose();
-        }
-      });
+      await _saveScreenshot(
+        tester,
+        boundaryKey,
+        viewport.value,
+        viewport.key,
+      );
+      if (viewport.key == 'phone') {
+        await tester.ensureVisible(find.text('时间海洋'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await _saveScreenshot(
+          tester,
+          boundaryKey,
+          viewport.value,
+          'phone-scroll',
+        );
+      }
       await tester.pumpWidget(const SizedBox.shrink());
     }, skip: !_screenshotsEnabled);
   }
@@ -168,4 +164,31 @@ Future<void> _loadFont(
     'Missing $family screenshot font. Install fonts-roboto and fonts-noto-cjk '
     'on the cloud runner, or configure $environmentKey.',
   );
+}
+
+Future<void> _saveScreenshot(
+  WidgetTester tester,
+  GlobalKey boundaryKey,
+  Size size,
+  String name,
+) async {
+  final boundary =
+      boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+  await tester.runAsync(() async {
+    final image = await boundary.toImage(pixelRatio: 1);
+    try {
+      expect(image.width, size.width.toInt());
+      expect(image.height, size.height.toInt());
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      expect(bytes, isNotNull);
+      final directory = Directory('build/ui-screenshots');
+      await directory.create(recursive: true);
+      await File('${directory.path}/$name.png').writeAsBytes(
+        bytes!.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+        flush: true,
+      );
+    } finally {
+      image.dispose();
+    }
+  });
 }
