@@ -249,7 +249,10 @@ class _GlassHourglassPainter extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_white.withValues(alpha: 0.88), _warm.withValues(alpha: 0.2)],
+            colors: [
+              _white.withValues(alpha: 0.88),
+              _warm.withValues(alpha: 0.2),
+            ],
           ).createShader(stream),
       );
       for (var i = 0; i < 9; i++) {
@@ -431,11 +434,13 @@ class _GlassHourglassPainter extends CustomPainter {
     final ring = Path()
       ..fillType = PathFillType.evenOdd
       ..addOval(bounds)
-      ..addOval(Rect.fromCenter(
-        center: Offset(_center, y - 0.5),
-        width: bounds.width - 9,
-        height: 8,
-      ));
+      ..addOval(
+        Rect.fromCenter(
+          center: Offset(_center, y - 0.5),
+          width: bounds.width - 9,
+          height: 8,
+        ),
+      );
     canvas.drawPath(
       ring,
       Paint()
