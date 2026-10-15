@@ -217,10 +217,7 @@ void main() {
     var notifications = 0;
     await open(
       tester,
-      HistoryPage(
-        repository: repository,
-        onChanged: () => notifications++,
-      ),
+      HistoryPage(repository: repository, onChanged: () => notifications++),
     );
     final delete = find.byKey(ValueKey('delete-entry-${entry.id}'));
     await tester.ensureVisible(delete);
@@ -245,14 +242,14 @@ void main() {
   testWidgets('successful edit notifies parent and rejected edit does not', (
     tester,
   ) async {
-    final entry = await record(DateTime(2020, 1, 1, 9), DateTime(2020, 1, 1, 10));
+    final entry = await record(
+      DateTime(2020, 1, 1, 9),
+      DateTime(2020, 1, 1, 10),
+    );
     var notifications = 0;
     await open(
       tester,
-      HistoryPage(
-        repository: repository,
-        onChanged: () => notifications++,
-      ),
+      HistoryPage(repository: repository, onChanged: () => notifications++),
     );
     final edit = find.byKey(ValueKey('edit-entry-${entry.id}'));
     await tester.ensureVisible(edit);
