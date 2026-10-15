@@ -1,7 +1,7 @@
 name: timesand
 description: "TimeSand: visualize the flow of time."
 publish_to: "none"
-version: 0.2.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ">=3.9.0 <4.0.0"
@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  sqflite_common_ffi: ^2.4.3
+  sqflite_common_ffi: 2.4.4
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +17,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/scenes/coastal-light.png
