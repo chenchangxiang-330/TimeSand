@@ -183,7 +183,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         initialDate: _historyDate,
         revision: _dataRevision,
       );
-    if (_tab == 2) return StatisticsPage(repository: widget.repository, revision: _dataRevision);
+    if (_tab == 2)
+      return StatisticsPage(
+        repository: widget.repository,
+        revision: _dataRevision,
+      );
     if (_tab == 3) return _settings();
     return RefreshIndicator(
       onRefresh: _load,
@@ -869,9 +873,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 leading: const Icon(Icons.info_outline),
                 title: const Text('开源组件许可'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => _openRoute(const ScenicBackground(
-                  child: LicensePage(applicationName: 'TimeSand'),
-                )),
+                onTap: () => _openRoute(
+                  const ScenicBackground(
+                    child: LicensePage(applicationName: 'TimeSand'),
+                  ),
+                ),
               ),
             ],
           ),
