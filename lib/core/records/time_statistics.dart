@@ -101,10 +101,16 @@ abstract final class TimeStatistics {
       while (cursor.isBefore(end)) {
         final monthEnd = DateTime(cursor.year, cursor.month + 1);
         final segmentEnd = monthEnd.isBefore(end) ? monthEnd : end;
-        final key = cursor.year.toString().padLeft(4, '0') + '-' +
+        final key =
+            cursor.year.toString().padLeft(4, '0') +
+            '-' +
             cursor.month.toString().padLeft(2, '0');
         final duration = segmentEnd.difference(cursor);
-        byMonth.update(key, (value) => value + duration, ifAbsent: () => duration);
+        byMonth.update(
+          key,
+          (value) => value + duration,
+          ifAbsent: () => duration,
+        );
         cursor = segmentEnd.toLocal();
       }
     }

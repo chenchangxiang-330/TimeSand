@@ -407,7 +407,10 @@ abstract final class LocalDataTransfer {
   static String _csvCell(Object? value) {
     var text = value?.toString() ?? '';
     if (RegExp(r'^\s*[=+@-]').hasMatch(text)) text = "'" + text;
-    if (text.contains(',') || text.contains('"') || text.contains('\n') || text.contains('\r')) {
+    if (text.contains(',') ||
+        text.contains('"') ||
+        text.contains('\n') ||
+        text.contains('\r')) {
       return '"${text.replaceAll('"', '""')}"';
     }
     return text;

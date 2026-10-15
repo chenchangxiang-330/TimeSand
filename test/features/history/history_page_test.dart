@@ -14,7 +14,8 @@ void main() {
     repo = TimeRecordsRepository(database);
     final bottle = await repo.createBottle(name: '阅读', color: 1);
     await repo.createManualEntry(
-      bottleId: bottle.id!, startedAt: DateTime.utc(2020, 1, 1, 9, 0, 15),
+      bottleId: bottle.id!,
+      startedAt: DateTime.utc(2020, 1, 1, 9, 0, 15),
       endedAt: DateTime.utc(2020, 1, 1, 10, 0, 15),
     );
   });
@@ -35,7 +36,10 @@ void main() {
     await tester.ensureVisible(find.byKey(const ValueKey('edit-entry-1')));
     await tester.tap(find.byKey(const ValueKey('edit-entry-1')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('entry-end-input')), '2020-01-01T11:00:15.000Z');
+    await tester.enterText(
+      find.byKey(const ValueKey('entry-end-input')),
+      '2020-01-01T11:00:15.000Z',
+    );
     await tester.tap(find.byKey(const ValueKey('save-entry-button')));
     await tester.pumpAndSettle();
     expect((await repo.fetchEntries()).single.durationSeconds, 7200);
@@ -49,31 +53,39 @@ void main() {
     await tester.ensureVisible(find.byKey(const ValueKey('edit-entry-1')));
     await tester.tap(find.byKey(const ValueKey('edit-entry-1')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('entry-end-input')), 'bad');
+    await tester.enterText(
+      find.byKey(const ValueKey('entry-end-input')),
+      'bad',
+    );
     await tester.tap(find.byKey(const ValueKey('save-entry-button')));
     await tester.pumpAndSettle();
     expect(find.textContaining('请保留日期'), findsOneWidget);
     expect((await repo.fetchEntries()).single.durationSeconds, 3600);
   });
 
-  testWidgets('delete cancellation preserves records and confirmation removes them', (tester) async {
-    await open(tester);
-    final button = find.byKey(const ValueKey('delete-entry-1'));
-    await tester.ensureVisible(button);
-    await tester.tap(button);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('取消'));
-    await tester.pumpAndSettle();
-    expect(await repo.fetchEntries(), hasLength(1));
-    await tester.tap(button);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('删除'));
-    await tester.pumpAndSettle();
-    expect(await repo.fetchEntries(), isEmpty);
-    expect(find.text('还没有历史投入记录。'), findsOneWidget);
-  });
+  testWidgets(
+    'delete cancellation preserves records and confirmation removes them',
+    (tester) async {
+      await open(tester);
+      final button = find.byKey(const ValueKey('delete-entry-1'));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      expect(await repo.fetchEntries(), hasLength(1));
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+      expect(await repo.fetchEntries(), isEmpty);
+      expect(find.text('还没有历史投入记录。'), findsOneWidget);
+    },
+  );
 
-  testWidgets('month and bottle controls filter and show lifetime totals', (tester) async {
+  testWidgets('month and bottle controls filter and show lifetime totals', (
+    tester,
+  ) async {
     await open(tester);
     await tester.tap(find.byKey(const ValueKey('history-bottle-filter')));
     await tester.pumpAndSettle();

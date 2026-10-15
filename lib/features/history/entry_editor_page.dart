@@ -18,7 +18,9 @@ class EntryEditorPage extends StatefulWidget {
 }
 
 class _EntryEditorPageState extends State<EntryEditorPage> {
-  late final _start = TextEditingController(text: _input(widget.entry.startedAt));
+  late final _start = TextEditingController(
+    text: _input(widget.entry.startedAt),
+  );
   late final _end = TextEditingController(text: _input(widget.entry.endedAt!));
   String? _error;
   bool _saving = false;
@@ -63,7 +65,10 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
             decoration: const InputDecoration(labelText: '结束时间'),
           ),
           if (_error != null)
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           const SizedBox(height: 20),
           FilledButton(
             key: const ValueKey('save-entry-button'),
@@ -82,17 +87,30 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     ).firstMatch(input);
     if (match == null) throw const FormatException('请保留日期、秒数和时区偏移。');
     final parts = [for (var i = 1; i <= 6; i++) int.parse(match.group(i)!)];
-    final calendar = DateTime.utc(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
-    if (calendar.year != parts[0] || calendar.month != parts[1] ||
-        calendar.day != parts[2] || calendar.hour != parts[3] ||
-        calendar.minute != parts[4] || calendar.second != parts[5]) {
+    final calendar = DateTime.utc(
+      parts[0],
+      parts[1],
+      parts[2],
+      parts[3],
+      parts[4],
+      parts[5],
+    );
+    if (calendar.year != parts[0] ||
+        calendar.month != parts[1] ||
+        calendar.day != parts[2] ||
+        calendar.hour != parts[3] ||
+        calendar.minute != parts[4] ||
+        calendar.second != parts[5]) {
       throw const FormatException('日期或时间不存在。');
     }
     return DateTime.parse(input);
   }
 
   Future<void> _save() async {
-    setState(() { _saving = true; _error = null; });
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       final start = _parse(_start.text);
       final end = _parse(_end.text);

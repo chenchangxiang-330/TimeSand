@@ -10,10 +10,17 @@ void main() {
     final db = await TimeSandDatabase.open(path: inMemoryDatabasePath);
     addTearDown(db.close);
     expect(await db.database.getVersion(), 2);
-    final indexes = await db.database.rawQuery("SELECT name FROM sqlite_master WHERE type='index'");
-    expect(indexes.map((row) => row['name']), containsAll([
-      'time_entries_bottle_index', 'time_entries_started_index', 'one_active_time_entry',
-    ]));
+    final indexes = await db.database.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='index'",
+    );
+    expect(
+      indexes.map((row) => row['name']),
+      containsAll([
+        'time_entries_bottle_index',
+        'time_entries_started_index',
+        'one_active_time_entry',
+      ]),
+    );
   });
 
   test('upgrades schema version 1 and preserves existing data', () async {
@@ -83,8 +90,9 @@ void main() {
     );
     expect((await reopened.query('bottles')).single['name'], '保留瓶子');
     expect(
-      (await reopened.rawQuery('PRAGMA table_info(time_entries)'))
-          .any((column) => column['name'] == 'notes'),
+      (await reopened.rawQuery(
+        'PRAGMA table_info(time_entries)',
+      )).any((column) => column['name'] == 'notes'),
       isFalse,
     );
     expect(

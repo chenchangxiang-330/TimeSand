@@ -79,9 +79,7 @@ class TimeSandDatabase {
   // sqflite wraps onCreate/onUpgrade and user_version in one transaction.
   // Each key is the destination schema version. Never mutate earlier steps.
   static const migrations = <int, List<String>>{
-    2: [
-      "ALTER TABLE time_entries ADD COLUMN notes TEXT NOT NULL DEFAULT ''",
-    ],
+    2: ["ALTER TABLE time_entries ADD COLUMN notes TEXT NOT NULL DEFAULT ''"],
   };
 
   static Future<void> migrate(

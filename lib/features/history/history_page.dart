@@ -131,11 +131,16 @@ class _HistoryPageState extends State<HistoryPage> {
                   if (_selectedBottleId != null)
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text('该瓶永久累计：' + formatRecordDuration(
-                        TimeStatistics.lifetime(
-                          bottleId: _selectedBottleId!, now: now, entries: _entries,
-                        ).total,
-                      )),
+                      child: Text(
+                        '该瓶永久累计：' +
+                            formatRecordDuration(
+                              TimeStatistics.lifetime(
+                                bottleId: _selectedBottleId!,
+                                now: now,
+                                entries: _entries,
+                              ).total,
+                            ),
+                      ),
                     ),
                   const SizedBox(height: 8),
                   if (filteredEntries.isEmpty)
@@ -207,7 +212,13 @@ class _HistoryPageState extends State<HistoryPage> {
                     for (final bottle in _bottles)
                       DropdownMenuItem<int?>(
                         value: bottle.id,
-                        child: SizedBox(width: 160, child: Text(bottle.name, overflow: TextOverflow.ellipsis)),
+                        child: SizedBox(
+                          width: 160,
+                          child: Text(
+                            bottle.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                   ],
                   onChanged: (value) {
@@ -247,15 +258,19 @@ class _HistoryPageState extends State<HistoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(names[entry.bottleId] ?? '已归档的时间之瓶',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              names[entry.bottleId] ?? '已归档的时间之瓶',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             Text(_formatInterval(entry)),
             Text(formatRecordDuration(entry.durationAt(now))),
             Wrap(
               children: [
                 TextButton.icon(
                   key: ValueKey('edit-entry-${entry.id}'),
-                  onPressed: entry.isActive ? null : () => _editEntry(context, entry),
+                  onPressed: entry.isActive
+                      ? null
+                      : () => _editEntry(context, entry),
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(entry.isActive ? '请先停止计时再编辑' : '编辑记录'),
                 ),
@@ -320,9 +335,13 @@ class _HistoryPageState extends State<HistoryPage> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('取消')),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消'),
+            ),
             FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, DateTime(year, month)),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, DateTime(year, month)),
               child: const Text('选择'),
             ),
           ],
@@ -330,7 +349,10 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     );
     if (selected != null && mounted) {
-      setState(() { _selectedMonth = selected; _selectedDate = null; });
+      setState(() {
+        _selectedMonth = selected;
+        _selectedDate = null;
+      });
     }
   }
 
@@ -356,7 +378,8 @@ class _HistoryPageState extends State<HistoryPage> {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => EntryEditorPage(repository: widget.repository, entry: entry),
+        builder: (_) =>
+            EntryEditorPage(repository: widget.repository, entry: entry),
       ),
     );
     if (changed == true && mounted) await _load();
@@ -421,7 +444,9 @@ class _HistoryPageState extends State<HistoryPage> {
                     initialValue: selectedBottle,
                     decoration: const InputDecoration(labelText: '时间之瓶'),
                     items: [
-                      for (final bottle in _bottles.where((bottle) => !bottle.isArchived))
+                      for (final bottle in _bottles.where(
+                        (bottle) => !bottle.isArchived,
+                      ))
                         DropdownMenuItem(
                           value: bottle,
                           child: Text(bottle.name),

@@ -17,7 +17,9 @@ class MemoryFiles implements BackupFiles {
   Future<String?> pickJson() async => picked;
   @override
   Future<String> saveText({
-    required String fileName, required String mimeType, required String contents,
+    required String fileName,
+    required String mimeType,
+    required String contents,
   }) async {
     if (fail) throw StateError('save failed');
     saved = contents;
@@ -38,7 +40,11 @@ void main() {
   tearDown(() => database.close());
 
   Future<void> open(WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(home: DataManagementPage(repository: repo, files: files)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DataManagementPage(repository: repo, files: files),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -54,7 +60,9 @@ void main() {
     expect(find.textContaining('导出失败'), findsOneWidget);
   });
 
-  testWidgets('invalid import reports error without altering current data', (tester) async {
+  testWidgets('invalid import reports error without altering current data', (
+    tester,
+  ) async {
     await repo.createBottle(name: '保留', color: 1);
     files.picked = '{broken';
     await open(tester);
@@ -64,7 +72,9 @@ void main() {
     expect((await repo.fetchBottles()).single.name, '保留');
   });
 
-  testWidgets('replace requires preview and a second explicit confirmation', (tester) async {
+  testWidgets('replace requires preview and a second explicit confirmation', (
+    tester,
+  ) async {
     files.picked = await LocalDataTransfer.exportJson(repo);
     await repo.createBottle(name: '保留', color: 1);
     await open(tester);
