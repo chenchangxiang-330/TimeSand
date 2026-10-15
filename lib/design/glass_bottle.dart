@@ -88,12 +88,10 @@ class _GlassBottlePainter extends CustomPainter {
     const bounds = Rect.fromLTWH(11, 15, 76, 117);
     final tint = Color.lerp(color, _white, 0.42)!;
     final edge = Color.lerp(color, const Color(0xFF5C86A3), 0.5)!;
-    canvas.drawOval(
+    _glow(
+      canvas,
       const Rect.fromLTWH(11, 130, 76, 8),
-      Paint()
-        ..shader = RadialGradient(
-          colors: [edge.withValues(alpha: 0.22), edge.withValues(alpha: 0)],
-        ).createShader(const Rect.fromLTWH(11, 130, 76, 8)),
+      edge.withValues(alpha: 0.22),
     );
     canvas.drawPath(
       glass,
@@ -135,16 +133,7 @@ class _GlassBottlePainter extends CustomPainter {
         width: 65,
         height: 28,
       );
-      canvas.drawOval(
-        glow,
-        Paint()
-          ..shader = RadialGradient(
-            colors: [
-              _white.withValues(alpha: 0.35),
-              _white.withValues(alpha: 0),
-            ],
-          ).createShader(glow),
-      );
+      _glow(canvas, glow, _white.withValues(alpha: 0.35));
       for (var i = 0; i < 65; i++) {
         canvas.drawCircle(
           Offset(
@@ -274,6 +263,23 @@ class _GlassBottlePainter extends CustomPainter {
         ..color = _white.withValues(alpha: 0.58)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2,
+    );
+    canvas.restore();
+  }
+
+  // Scale a circular shader with its canvas so wide reflections remain
+  // elliptical instead of collapsing to a dot on the shortest dimension.
+  void _glow(Canvas canvas, Rect bounds, Color color) {
+    canvas.save();
+    canvas.translate(bounds.center.dx, bounds.center.dy);
+    canvas.scale(bounds.width / 2, bounds.height / 2);
+    canvas.drawCircle(
+      Offset.zero,
+      1,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ).createShader(const Rect.fromLTWH(-1, -1, 2, 2)),
     );
     canvas.restore();
   }

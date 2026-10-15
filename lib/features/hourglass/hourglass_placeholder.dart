@@ -203,16 +203,7 @@ class _GlassHourglassPainter extends CustomPainter {
     final glass = _vessel();
     const bodyBounds = Rect.fromLTWH(21, 29, 178, 258);
     const contact = Rect.fromLTWH(27, 296, 166, 12);
-    canvas.drawOval(
-      contact,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            _shadow.withValues(alpha: 0.16),
-            _shadow.withValues(alpha: 0),
-          ],
-        ).createShader(contact),
-    );
+    _glow(canvas, contact, _shadow.withValues(alpha: 0.16));
     canvas.drawPath(
       glass,
       Paint()
@@ -258,10 +249,7 @@ class _GlassHourglassPainter extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              _white.withValues(alpha: 0.88),
-              _warm.withValues(alpha: 0.2),
-            ],
+            colors: [_white.withValues(alpha: 0.88), _warm.withValues(alpha: 0.2)],
           ).createShader(stream),
       );
       for (var i = 0; i < 9; i++) {
@@ -315,6 +303,23 @@ class _GlassHourglassPainter extends CustomPainter {
     canvas.restore();
   }
 
+  // Scale a circular shader with its canvas so wide reflections remain
+  // elliptical instead of collapsing to a dot on the shortest dimension.
+  void _glow(Canvas canvas, Rect bounds, Color color) {
+    canvas.save();
+    canvas.translate(bounds.center.dx, bounds.center.dy);
+    canvas.scale(bounds.width / 2, bounds.height / 2);
+    canvas.drawCircle(
+      Offset.zero,
+      1,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ).createShader(const Rect.fromLTWH(-1, -1, 2, 2)),
+    );
+    canvas.restore();
+  }
+
   void _sand(Canvas canvas, Rect bounds, double surfaceRadius, int seed) {
     canvas.save();
     canvas.clipRect(bounds);
@@ -338,13 +343,7 @@ class _GlassHourglassPainter extends CustomPainter {
       width: 148,
       height: 54,
     );
-    canvas.drawOval(
-      glow,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [_white.withValues(alpha: 0.8), _white.withValues(alpha: 0)],
-        ).createShader(glow),
-    );
+    _glow(canvas, glow, _white.withValues(alpha: 0.8));
     // Static seeded micro-grains keep screenshots and reduced-motion views
     // textured. They are decorative; no grain contributes to time accounting.
     for (var i = 0; i < 145; i++) {
@@ -432,13 +431,11 @@ class _GlassHourglassPainter extends CustomPainter {
     final ring = Path()
       ..fillType = PathFillType.evenOdd
       ..addOval(bounds)
-      ..addOval(
-        Rect.fromCenter(
-          center: Offset(_center, y - 0.5),
-          width: bounds.width - 9,
-          height: 8,
-        ),
-      );
+      ..addOval(Rect.fromCenter(
+        center: Offset(_center, y - 0.5),
+        width: bounds.width - 9,
+        height: 8,
+      ));
     canvas.drawPath(
       ring,
       Paint()
