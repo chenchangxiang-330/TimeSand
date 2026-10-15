@@ -186,7 +186,7 @@ class _GlassHourglassPainter extends CustomPainter {
           (_neckRadius - 2) * t +
           (_radius - _neckRadius) * (t * t * t - 0.5 * t * t * t * t) +
           _bulge * (t / 2 - math.sin(2 * math.pi * t) / (4 * math.pi));
-      final total = (_radius + _neckRadius + _bulge - 4) / 2;
+      const total = (_radius + _neckRadius + _bulge - 4) / 2;
       if (area / total < fraction) {
         low = t;
       } else {
