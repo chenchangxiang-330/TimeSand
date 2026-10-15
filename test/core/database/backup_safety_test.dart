@@ -267,15 +267,17 @@ void main() {
       '',
     );
   });
-  test('oversize JSON export is refused before creating an unrestorable backup', () async {
-    await database.database.update('time_entries', {
-      'notes': 'x' * LocalDataTransfer.maxBackupBytes,
-    });
-    await expectLater(
-      LocalDataTransfer.exportJson(repository),
-      throwsA(isA<LocalDataTransferException>()),
-    );
-    expect(await repository.fetchEntries(), hasLength(1));
-  });
-
+  test(
+    'oversize JSON export is refused before creating an unrestorable backup',
+    () async {
+      await database.database.update('time_entries', {
+        'notes': 'x' * LocalDataTransfer.maxBackupBytes,
+      });
+      await expectLater(
+        LocalDataTransfer.exportJson(repository),
+        throwsA(isA<LocalDataTransferException>()),
+      );
+      expect(await repository.fetchEntries(), hasLength(1));
+    },
+  );
 }

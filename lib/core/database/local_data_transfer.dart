@@ -118,7 +118,9 @@ abstract final class LocalDataTransfer {
     final bundle = await capture(repository, exportedAt: exportedAt);
     final raw = const JsonEncoder.withIndent('  ').convert(bundle.toJson());
     if (utf8.encode(raw).length > maxBackupBytes) {
-      throw const LocalDataTransferException('备份超过 20 MiB，无法导出可恢复的 JSON。请先导出 CSV 保存记录。');
+      throw const LocalDataTransferException(
+        '备份超过 20 MiB，无法导出可恢复的 JSON。请先导出 CSV 保存记录。',
+      );
     }
     return raw;
   }
