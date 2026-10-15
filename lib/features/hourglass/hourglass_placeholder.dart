@@ -44,7 +44,7 @@ class _HourglassPlaceholderState extends State<HourglassPlaceholder>
     super.didChangeDependencies();
     _motionAllowed =
         !(MediaQuery.maybeOf(context)?.disableAnimations ?? false) &&
-        TickerMode.of(context);
+        TickerMode.valuesOf(context).enabled;
     _syncMotion();
   }
 
