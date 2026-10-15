@@ -9,6 +9,7 @@ import '../../design/app_theme.dart';
 import '../../design/glass.dart';
 import '../../design/glass_bottle.dart';
 import '../bottles/bottle_detail_page.dart';
+import '../bottles/bottle_editor_dialog.dart';
 import '../history/history_page.dart';
 import '../hourglass/hourglass_placeholder.dart';
 import '../statistics/statistics_page.dart';
@@ -69,10 +70,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (!widget.enableTicker ||
         !_foreground ||
         _routeOpen ||
-        (_tab != 0 && _tab != 4))
+        (_tab != 0 && _tab != 4 && _activeEntry == null))
       return;
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = _readClock());
+      if (mounted && ModalRoute.of(context)?.isCurrent != false) {
+        setState(() => _now = _readClock());
+      }
     });
   }
 
@@ -110,6 +113,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         if (_selectedId != null && !_bottles.any((b) => b.id == _selectedId))
           _selectedId = null;
       });
+      _startClock();
     } catch (_) {
       if (mounted)
         setState(() {
@@ -1072,72 +1076,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     required String title,
     String initialName = '',
     Color? initialColor,
-  }) async {
-    final controller = TextEditingController(text: initialName);
-    var selectedColor = initialColor ?? const Color(0xFF389CE1);
-    final colors = <Color>[
-      const Color(0xFFE8C98D),
-      const Color(0xFF33AB99),
-      const Color(0xFFEA88AF),
-      const Color(0xFF9C88DA),
-      const Color(0xFFE9B457),
-    ];
-    final result = await showDialog<(String, int)>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          scrollable: true,
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                autofocus: true,
-                controller: controller,
-                decoration: const InputDecoration(labelText: '名称'),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                children: [
-                  for (final color in colors)
-                    InkWell(
-                      onTap: () => setDialogState(() => selectedColor = color),
-                      child: CircleAvatar(
-                        backgroundColor: color,
-                        child: selectedColor.toARGB32() == color.toARGB32()
-                            ? const Icon(Icons.check)
-                            : null,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final name = controller.text.trim();
-                if (name.isNotEmpty) {
-                  Navigator.pop(dialogContext, (
-                    name,
-                    selectedColor.toARGB32(),
-                  ));
-                }
-              },
-              child: const Text('保存'),
-            ),
-          ],
-        ),
-      ),
-    );
-    controller.dispose();
-    return result;
-  }
+  }) => showDialog<(String, int)>(
+    context: context,
+    builder: (_) => BottleEditorDialog(
+      title: title, initialName: initialName, initialColor: initialColor,
+    ),
+  );
 
   void _showMessage(String message) {
     if (!mounted) return;
