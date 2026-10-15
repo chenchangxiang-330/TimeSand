@@ -1079,7 +1079,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }) => showDialog<(String, int)>(
     context: context,
     builder: (_) => BottleEditorDialog(
-      title: title, initialName: initialName, initialColor: initialColor,
+      title: title,
+      initialName: initialName,
+      initialColor: initialColor,
     ),
   );
 

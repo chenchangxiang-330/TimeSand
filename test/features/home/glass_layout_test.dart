@@ -159,18 +159,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-statistics')));
     await tester.pumpAndSettle();
     expect(find.byType(StatisticsPage), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('statistics-lifetime')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('statistics-lifetime')), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(const ValueKey('nav-home')));
     await tester.pumpAndSettle();
     expect(find.byType(StatisticsPage), findsNothing);
-    expect(
-      find.byKey(const ValueKey('primary-timer-button')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('primary-timer-button')), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -187,81 +181,87 @@ void main() {
     await tester.tap(manage);
     await tester.pumpAndSettle();
     expect(find.text('我的时间之瓶'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('create-bottle-button')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('create-bottle-button')), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('selection starts the chosen bottle and stop persists the interval', (
-    tester,
-  ) async {
-    final first = await repository.createBottle(name: '阅读', color: 0xFF8EBCA8);
-    final second = await repository.createBottle(name: '创作', color: 0xFFC6A1D1);
-    await _pumpHome(
-      tester,
-      repository,
-      size: const Size(390, 844),
-      clock: DateTime.now,
-    );
-    final select = find.byKey(ValueKey('select-bottle-${second.id}'));
-    await _reveal(tester, select);
-    await tester.tap(select);
-    await tester.pumpAndSettle();
-    expect(tester.widget<IconButton>(select).isSelected, isTrue);
+  testWidgets(
+    'selection starts the chosen bottle and stop persists the interval',
+    (tester) async {
+      final first = await repository.createBottle(
+        name: '阅读',
+        color: 0xFF8EBCA8,
+      );
+      final second = await repository.createBottle(
+        name: '创作',
+        color: 0xFFC6A1D1,
+      );
+      await _pumpHome(
+        tester,
+        repository,
+        size: const Size(390, 844),
+        clock: DateTime.now,
+      );
+      final select = find.byKey(ValueKey('select-bottle-${second.id}'));
+      await _reveal(tester, select);
+      await tester.tap(select);
+      await tester.pumpAndSettle();
+      expect(tester.widget<IconButton>(select).isSelected, isTrue);
 
-    final primary = find.byKey(const ValueKey('primary-timer-button'));
-    await _reveal(tester, primary);
-    await tester.tap(primary);
-    await tester.pumpAndSettle();
-    final active = await repository.fetchActiveEntry();
-    expect(active, isNotNull);
-    expect(active!.bottleId, second.id);
-    expect(find.byKey(ValueKey('start-${first.id}')), findsNothing);
-    expect(find.byKey(ValueKey('start-${second.id}')), findsNothing);
+      final primary = find.byKey(const ValueKey('primary-timer-button'));
+      await _reveal(tester, primary);
+      await tester.tap(primary);
+      await tester.pumpAndSettle();
+      final active = await repository.fetchActiveEntry();
+      expect(active, isNotNull);
+      expect(active!.bottleId, second.id);
+      expect(find.byKey(ValueKey('start-${first.id}')), findsNothing);
+      expect(find.byKey(ValueKey('start-${second.id}')), findsNothing);
 
-    // Changing selection while recording cannot silently replace the timer.
-    final selectOther = find.byKey(ValueKey('select-bottle-${first.id}'));
-    await _reveal(tester, selectOther);
-    await tester.tap(selectOther);
-    await tester.pumpAndSettle();
-    expect((await repository.fetchActiveEntry())!.id, active.id);
-    await expectLater(
-      repository.startTimer(bottleId: first.id!),
-      throwsA(isA<ActiveTimerConflictException>()),
-    );
-    expect((await repository.fetchEntries()), hasLength(1));
+      // Changing selection while recording cannot silently replace the timer.
+      final selectOther = find.byKey(ValueKey('select-bottle-${first.id}'));
+      await _reveal(tester, selectOther);
+      await tester.tap(selectOther);
+      await tester.pumpAndSettle();
+      expect((await repository.fetchActiveEntry())!.id, active.id);
+      await expectLater(
+        repository.startTimer(bottleId: first.id!),
+        throwsA(isA<ActiveTimerConflictException>()),
+      );
+      expect((await repository.fetchEntries()), hasLength(1));
 
-    final stop = find.byKey(const ValueKey('stop-timer-button'));
-    await _reveal(tester, stop);
-    await tester.tap(stop);
-    await tester.pumpAndSettle();
-    expect(await repository.fetchActiveEntry(), isNull);
-    final restored = (await TimeRecordsRepository(database).fetchEntries()).single;
-    expect(restored.id, active.id);
-    expect(restored.bottleId, second.id);
-    expect(restored.startedAt, active.startedAt);
-    expect(restored.endedAt!.isAfter(restored.startedAt), isTrue);
-    expect(
-      restored.durationSeconds,
-      restored.endedAt!.difference(restored.startedAt).inSeconds,
-    );
+      final stop = find.byKey(const ValueKey('stop-timer-button'));
+      await _reveal(tester, stop);
+      await tester.tap(stop);
+      await tester.pumpAndSettle();
+      expect(await repository.fetchActiveEntry(), isNull);
+      final restored = (await TimeRecordsRepository(
+        database,
+      ).fetchEntries()).single;
+      expect(restored.id, active.id);
+      expect(restored.bottleId, second.id);
+      expect(restored.startedAt, active.startedAt);
+      expect(restored.endedAt!.isAfter(restored.startedAt), isTrue);
+      expect(
+        restored.durationSeconds,
+        restored.endedAt!.difference(restored.startedAt).inSeconds,
+      );
 
-    // Rebuild the actual homepage against the same SQLite database.
-    await tester.pumpWidget(const SizedBox.shrink());
-    await _pumpHome(
-      tester,
-      TimeRecordsRepository(database),
-      size: const Size(390, 844),
-      clock: DateTime.now,
-    );
-    expect(find.byKey(const ValueKey('stop-timer-button')), findsNothing);
-    expect(find.text('没有正在进行的计时'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
+      // Rebuild the actual homepage against the same SQLite database.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _pumpHome(
+        tester,
+        TimeRecordsRepository(database),
+        size: const Size(390, 844),
+        clock: DateTime.now,
+      );
+      expect(find.byKey(const ValueKey('stop-timer-button')), findsNothing);
+      expect(find.text('没有正在进行的计时'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets('system reduced motion stops decorative frames on the homepage', (
     tester,
@@ -291,44 +291,44 @@ void main() {
   });
 
   for (final save in [false, true]) {
-    testWidgets('narrow bottle form with keyboard ${save ? 'saves' : 'cancels'}', (
-      tester,
-    ) async {
-      await _pumpHome(
-        tester,
-        repository,
-        size: const Size(320, 740),
-        textScale: 1.7,
-      );
-      final create = find.byKey(const ValueKey('create-bottle-button'));
-      await _reveal(tester, create);
-      await tester.tap(create);
-      await tester.pumpAndSettle();
-      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
-      addTearDown(tester.view.resetViewInsets);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'narrow bottle form with keyboard ${save ? 'saves' : 'cancels'}',
+      (tester) async {
+        await _pumpHome(
+          tester,
+          repository,
+          size: const Size(320, 740),
+          textScale: 1.7,
+        );
+        final create = find.byKey(const ValueKey('create-bottle-button'));
+        await _reveal(tester, create);
+        await tester.tap(create);
+        await tester.pumpAndSettle();
+        tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+        addTearDown(tester.view.resetViewInsets);
+        await tester.pumpAndSettle();
 
-      final name = find.byType(TextField);
-      expect(name, findsOneWidget);
-      await tester.enterText(name, '键盘下创建的时间之瓶');
-      final action = find.widgetWithText(TextButton, '取消');
-      final submit = find.widgetWithText(FilledButton, '保存');
-      await _reveal(tester, save ? submit : action);
-      expect(tester.takeException(), isNull);
-      await tester.tap(save ? submit : action);
-      await tester.pumpAndSettle();
+        final name = find.byType(TextField);
+        expect(name, findsOneWidget);
+        await tester.enterText(name, '键盘下创建的时间之瓶');
+        final action = find.widgetWithText(TextButton, '取消');
+        final submit = find.widgetWithText(FilledButton, '保存');
+        await _reveal(tester, save ? submit : action);
+        expect(tester.takeException(), isNull);
+        await tester.tap(save ? submit : action);
+        await tester.pumpAndSettle();
 
-      expect(find.byType(AlertDialog), findsNothing);
-      final bottles = await repository.fetchBottles();
-      expect(bottles, hasLength(save ? 1 : 0));
-      if (save) {
-        expect(bottles.single.name, '键盘下创建的时间之瓶');
-      }
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
+        expect(find.byType(AlertDialog), findsNothing);
+        final bottles = await repository.fetchBottles();
+        expect(bottles, hasLength(save ? 1 : 0));
+        if (save) {
+          expect(bottles.single.name, '键盘下创建的时间之瓶');
+        }
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
   }
-
 }
 
 Future<void> _pumpHome(
@@ -352,9 +352,7 @@ Future<void> _pumpHome(
     MaterialApp(
       theme: AppTheme.light,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(
+        data: MediaQuery.of(context).copyWith(
           textScaler: TextScaler.linear(textScale),
           disableAnimations: disableAnimations,
         ),

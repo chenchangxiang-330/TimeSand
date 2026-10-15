@@ -66,19 +66,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.byType(HomePage), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('stop-timer-button')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('stop-timer-button')), findsOneWidget);
       expect(await repository.fetchBottles(), hasLength(4));
       expect(await repository.fetchEntries(), hasLength(5));
 
-      await _saveScreenshot(
-        tester,
-        boundaryKey,
-        viewport.value,
-        viewport.key,
-      );
+      await _saveScreenshot(tester, boundaryKey, viewport.value, viewport.key);
       if (viewport.key == 'phone') {
         await tester.ensureVisible(find.text('时间海洋'));
         await tester.pumpAndSettle();
