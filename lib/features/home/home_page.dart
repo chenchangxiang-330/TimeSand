@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int? _selectedId;
   int _tab = 0;
   int _historyRevision = 0;
+  int _dataRevision = 0;
   DateTime? _historyDate;
   bool _loading = true;
   bool _foreground = true;
@@ -107,6 +108,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       setState(() {
         _allBottles = bottles;
         _entries = entries;
+        _dataRevision++;
         _now = _readClock();
         _loading = false;
         _error = null;
@@ -179,8 +181,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         key: ValueKey('history-$_historyRevision'),
         repository: widget.repository,
         initialDate: _historyDate,
+        revision: _dataRevision,
       );
-    if (_tab == 2) return StatisticsPage(repository: widget.repository);
+    if (_tab == 2) return StatisticsPage(repository: widget.repository, revision: _dataRevision);
     if (_tab == 3) return _settings();
     return RefreshIndicator(
       onRefresh: _load,
@@ -263,7 +266,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       IconButton(
         key: const ValueKey('history-button'),
         tooltip: '日历与历史记录',
-        onPressed: () => _navigate(1),
+        onPressed: () => _navigate(1, calendar: true),
         icon: const Icon(Icons.calendar_month_outlined),
       ),
     ],
@@ -765,7 +768,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     padding: const EdgeInsets.only(bottom: 8),
     child: ListTile(
       key: ValueKey(key),
-      selected: _tab == tab,
+      selected: _tab == tab && (tab != 1 || calendar == (_historyDate != null)),
       selectedTileColor: const Color(0x55B6D9FF),
       selectedColor: AppTheme.blue,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -866,10 +869,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 leading: const Icon(Icons.info_outline),
                 title: const Text('开源组件许可'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => showLicensePage(
-                  context: context,
-                  applicationName: 'TimeSand',
-                ),
+                onTap: () => _openRoute(const ScenicBackground(
+                  child: LicensePage(applicationName: 'TimeSand'),
+                )),
               ),
             ],
           ),
