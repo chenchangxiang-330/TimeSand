@@ -13,12 +13,14 @@ class HistoryPage extends StatefulWidget {
     required this.repository,
     this.initialDate,
     this.revision = 0,
+    this.onChanged,
     super.key,
   });
 
   final TimeRecordsRepository repository;
   final DateTime? initialDate;
   final int revision;
+  final VoidCallback? onChanged;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -397,7 +399,10 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     try {
       await widget.repository.deleteEntry(entry.id!);
       await _load();
-      if (mounted) _message('记录已删除，统计已更新。');
+      if (mounted) {
+        widget.onChanged?.call();
+        _message('记录已删除，统计已更新。');
+      }
     } catch (error) {
       if (mounted) _message('删除失败：$error');
     }
@@ -536,7 +541,10 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     );
     if (saved == true && mounted) {
       await _load();
-      if (mounted) _message('时间已保存，统计已更新。');
+      if (mounted) {
+        widget.onChanged?.call();
+        _message('时间已保存，统计已更新。');
+      }
     }
   }
 

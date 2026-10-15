@@ -14,11 +14,13 @@ class StatisticsPage extends StatefulWidget {
   const StatisticsPage({
     required this.repository,
     this.revision = 0,
+    this.onChanged,
     super.key,
   });
 
   final TimeRecordsRepository repository;
   final int revision;
+  final VoidCallback? onChanged;
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -488,6 +490,7 @@ class _StatisticsPageState extends State<StatisticsPage>
         builder: (_) => HistoryPage(
           repository: widget.repository,
           initialDate: date ?? _date,
+          onChanged: widget.onChanged,
         ),
       ),
     );
@@ -502,7 +505,10 @@ class _StatisticsPageState extends State<StatisticsPage>
             BottleDetailPage(repository: widget.repository, bottle: bottle),
       ),
     );
-    if (mounted) await _load();
+    if (mounted) {
+      await _load();
+      if (mounted) widget.onChanged?.call();
+    }
   }
 
   String _dateLabel(DateTime value) =>

@@ -206,4 +206,72 @@ void main() {
     expect(textAt(tester, 'statistics-daily-recorded'), '0秒');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('active deletion notifies the parent only after confirmation', (
+    tester,
+  ) async {
+    final entry = await repository.startTimer(
+      bottleId: bottle.id!,
+      startedAt: DateTime(2020, 1, 1, 9),
+    );
+    var notifications = 0;
+    await open(
+      tester,
+      HistoryPage(
+        repository: repository,
+        onChanged: () => notifications++,
+      ),
+    );
+    final delete = find.byKey(ValueKey('delete-entry-${entry.id}'));
+    await tester.ensureVisible(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    expect(notifications, 0);
+    expect(await repository.fetchActiveEntry(), isNotNull);
+
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '删除'));
+    await tester.pumpAndSettle();
+    expect(notifications, 1);
+    expect(await repository.fetchActiveEntry(), isNull);
+    expect(find.text('还没有历史投入记录。'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('successful edit notifies parent and rejected edit does not', (
+    tester,
+  ) async {
+    final entry = await record(DateTime(2020, 1, 1, 9), DateTime(2020, 1, 1, 10));
+    var notifications = 0;
+    await open(
+      tester,
+      HistoryPage(
+        repository: repository,
+        onChanged: () => notifications++,
+      ),
+    );
+    final edit = find.byKey(ValueKey('edit-entry-${entry.id}'));
+    await tester.ensureVisible(edit);
+    await tester.pumpAndSettle();
+    await tester.tap(edit);
+    await tester.pumpAndSettle();
+    final endInput = find.byKey(const ValueKey('entry-end-input'));
+    await tester.enterText(endInput, '2020-02-30T10:00:00');
+    await tester.tap(find.byKey(const ValueKey('save-entry-button')));
+    await tester.pumpAndSettle();
+    expect(notifications, 0);
+    expect(find.textContaining('日期或时间不存在'), findsOneWidget);
+
+    await tester.enterText(endInput, '2020-01-01T11:00:00');
+    await tester.tap(find.byKey(const ValueKey('save-entry-button')));
+    await tester.pumpAndSettle();
+    expect(notifications, 1);
+    expect((await repository.fetchEntries()).single.durationSeconds, 7200);
+    expect(find.text('编辑时间记录'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
