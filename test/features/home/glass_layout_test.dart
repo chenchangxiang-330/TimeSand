@@ -134,7 +134,7 @@ void main() {
     final ids = await _seedBottles(repository, count: 2);
     await repository.startTimer(
       bottleId: ids.first,
-      startedAt: _sampleNow.subtract(const Duration(minutes: 20)),
+      startedAt: DateTime.now().subtract(const Duration(minutes: 20)),
     );
     await _pumpHome(
       tester,
@@ -146,6 +146,10 @@ void main() {
     await _reveal(tester, stop);
     expect(stop.hitTestable(), findsOneWidget);
     expect(await repository.fetchActiveEntry(), isNotNull);
+    await tester.tap(stop);
+    await tester.pumpAndSettle();
+    expect(await repository.fetchActiveEntry(), isNull);
+    expect((await repository.fetchEntries()).last.endedAt, isNotNull);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -285,6 +289,45 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  for (final save in [false, true]) {
+    testWidgets('narrow bottle form with keyboard ${save ? 'saves' : 'cancels'}', (
+      tester,
+    ) async {
+      await _pumpHome(
+        tester,
+        repository,
+        size: const Size(320, 740),
+        textScale: 1.7,
+      );
+      final create = find.byKey(const ValueKey('create-bottle-button'));
+      await _reveal(tester, create);
+      await tester.tap(create);
+      await tester.pumpAndSettle();
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+
+      final name = find.byType(TextField);
+      expect(name, findsOneWidget);
+      await tester.enterText(name, '键盘下创建的时间之瓶');
+      final action = find.widgetWithText(TextButton, '取消');
+      final submit = find.widgetWithText(FilledButton, '保存');
+      await _reveal(tester, save ? submit : action);
+      expect(tester.takeException(), isNull);
+      await tester.tap(save ? submit : action);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      final bottles = await repository.fetchBottles();
+      expect(bottles, hasLength(save ? 1 : 0));
+      if (save) {
+        expect(bottles.single.name, '键盘下创建的时间之瓶');
+      }
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
 }
 
