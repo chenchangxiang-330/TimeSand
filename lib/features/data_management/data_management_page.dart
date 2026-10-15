@@ -84,6 +84,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
         contents: contents,
       );
       if (mounted) _showMessage(context, message);
+    } on LocalDataTransferException catch (error) {
+      if (mounted) _showMessage(context, '导出失败：' + error.message);
     } catch (_) {
       if (mounted) _showMessage(context, '导出失败，请检查保存位置或重试。');
     } finally {

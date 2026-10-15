@@ -105,6 +105,7 @@ void main() {
     'format_version',
     'exported_at',
     'timezone',
+    'timezone_offset_minutes',
     'database',
     'bottles',
     'time_entries',
@@ -187,8 +188,8 @@ void main() {
     final entries = backup['time_entries'] as List;
     final later = Map<String, dynamic>.from(entries.single as Map)
       ..['id'] = 2
-      ..['started_at'] = '2090-01-02T09:00:00.000Z'
-      ..['ended_at'] = '2090-01-02T10:00:00.000Z';
+      ..['started_at'] = '2020-01-02T09:00:00.000Z'
+      ..['ended_at'] = '2020-01-02T10:00:00.000Z';
     entries.single
       ..['source'] = 'active'
       ..['ended_at'] = null
@@ -266,4 +267,15 @@ void main() {
       '',
     );
   });
+  test('oversize JSON export is refused before creating an unrestorable backup', () async {
+    await database.database.update('time_entries', {
+      'notes': 'x' * LocalDataTransfer.maxBackupBytes,
+    });
+    await expectLater(
+      LocalDataTransfer.exportJson(repository),
+      throwsA(isA<LocalDataTransferException>()),
+    );
+    expect(await repository.fetchEntries(), hasLength(1));
+  });
+
 }

@@ -90,6 +90,7 @@ class LocalDataBundle {
 
 abstract final class LocalDataTransfer {
   static const int formatVersion = 1;
+  static const int maxBackupBytes = 20 * 1024 * 1024;
 
   static Future<LocalDataBundle> capture(
     TimeRecordsRepository repository, {
@@ -115,7 +116,11 @@ abstract final class LocalDataTransfer {
     DateTime? exportedAt,
   }) async {
     final bundle = await capture(repository, exportedAt: exportedAt);
-    return const JsonEncoder.withIndent('  ').convert(bundle.toJson());
+    final raw = const JsonEncoder.withIndent('  ').convert(bundle.toJson());
+    if (utf8.encode(raw).length > maxBackupBytes) {
+      throw const LocalDataTransferException('备份超过 20 MiB，无法导出可恢复的 JSON。请先导出 CSV 保存记录。');
+    }
+    return raw;
   }
 
   static Future<String> exportCsv(TimeRecordsRepository repository) async {
@@ -156,7 +161,7 @@ abstract final class LocalDataTransfer {
 
   static LocalDataBundle parseJson(String raw, {DateTime? now}) {
     final referenceNow = now ?? DateTime.now();
-    if (utf8.encode(raw).length > 20 * 1024 * 1024) {
+    if (utf8.encode(raw).length > maxBackupBytes) {
       throw const LocalDataTransferException('备份文件不能超过 20 MiB。');
     }
     final decoded = jsonDecode(raw);
@@ -170,6 +175,10 @@ abstract final class LocalDataTransfer {
     }
     final exportedAt = _requiredDate(decoded, 'exported_at');
     final timezone = _requiredString(decoded, 'timezone');
+    final offset = _requiredInt(decoded, 'timezone_offset_minutes');
+    if (offset < -24 * 60 || offset > 24 * 60) {
+      throw const LocalDataTransferException('时区偏移无效。');
+    }
     final database = decoded['database'];
     final schemaVersion = database is Map<String, dynamic>
         ? _requiredInt(database, 'schema_version')
