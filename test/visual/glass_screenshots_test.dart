@@ -49,29 +49,18 @@ void main() {
       await _seedScreenshotData(repository);
       final boundaryKey = GlobalKey();
 
-      await tester.pumpWidget(
-        RepaintBoundary(
-          key: boundaryKey,
-          child: MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            home: HomePage(
-              repository: repository,
-              enableTicker: false,
-              clock: () => _sampleNow,
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      expect(find.byType(HomePage), findsOneWidget);
+      await _pumpScreenshotHome(tester, repository, boundaryKey);
       expect(find.byKey(const ValueKey('stop-timer-button')), findsOneWidget);
       expect(await repository.fetchBottles(), hasLength(4));
       expect(await repository.fetchEntries(), hasLength(5));
 
-      await _saveScreenshot(tester, boundaryKey, viewport.value, viewport.key);
       if (viewport.key == 'phone') {
+        await _saveScreenshot(
+          tester,
+          boundaryKey,
+          viewport.value,
+          'phone-active',
+        );
         await tester.ensureVisible(find.text('时间海洋'));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
@@ -80,6 +69,32 @@ void main() {
           boundaryKey,
           viewport.value,
           'phone-scroll',
+        );
+      }
+
+      // End the sample timer through the real repository. Main captures show
+      // the idle interface, while phone-active preserves the recording state.
+      await repository.stopTimer(endedAt: _sampleNow);
+      expect(await repository.fetchActiveEntry(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _pumpScreenshotHome(tester, repository, boundaryKey);
+      expect(find.byKey(const ValueKey('stop-timer-button')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('primary-timer-button')),
+        findsOneWidget,
+      );
+      await _saveScreenshot(tester, boundaryKey, viewport.value, viewport.key);
+      if (viewport.key == 'phone') {
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('primary-timer-button')),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await _saveScreenshot(
+          tester,
+          boundaryKey,
+          viewport.value,
+          'phone-idle',
         );
       }
       await tester.pumpWidget(const SizedBox.shrink());
@@ -114,6 +129,14 @@ Future<void> _seedScreenshotData(TimeRecordsRepository repository) async {
 }
 
 Future<void> _loadScreenshotFonts() async {
+  // flutter test does not register the icon family automatically. Load the
+  // actual bundled font so screenshots contain icons rather than tofu boxes.
+  final icons = await rootBundle.load('fonts/MaterialIcons-Regular.otf');
+  expect(icons.lengthInBytes, greaterThan(10000));
+  final materialIcons = FontLoader('MaterialIcons')
+    ..addFont(Future<ByteData>.value(icons));
+  await materialIcons.load();
+
   await _loadFont(
     'Roboto',
     environmentKey: 'ROBOTO_FONT',
@@ -183,4 +206,38 @@ Future<void> _saveScreenshot(
       image.dispose();
     }
   });
+}
+
+Future<void> _pumpScreenshotHome(
+  WidgetTester tester,
+  TimeRecordsRepository repository,
+  GlobalKey boundaryKey,
+) async {
+  await tester.pumpWidget(
+    RepaintBoundary(
+      key: boundaryKey,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: HomePage(
+          repository: repository,
+          enableTicker: false,
+          clock: () => _sampleNow,
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  Object? imageError;
+  await tester.runAsync(
+    () => precacheImage(
+      const AssetImage('assets/scenes/coastal-light.png'),
+      tester.element(find.byType(HomePage)),
+      onError: (error, stackTrace) => imageError = error,
+    ),
+  );
+  expect(imageError, isNull, reason: 'The real scene asset must decode.');
+  await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
+  expect(find.byType(HomePage), findsOneWidget);
 }
