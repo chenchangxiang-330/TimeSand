@@ -272,7 +272,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       IconButton(
         key: const ValueKey('history-button'),
         tooltip: '日历与历史记录',
-        onPressed: () => _navigate(1, calendar: true),
+        onPressed: () => _navigate(1),
         icon: const Icon(Icons.calendar_month_outlined),
       ),
     ],
