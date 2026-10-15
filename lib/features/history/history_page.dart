@@ -9,10 +9,16 @@ import '../../core/time/day_window.dart';
 import '../../design/glass.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({required this.repository, this.initialDate, super.key});
+  const HistoryPage({
+    required this.repository,
+    this.initialDate,
+    this.revision = 0,
+    super.key,
+  });
 
   final TimeRecordsRepository repository;
   final DateTime? initialDate;
+  final int revision;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -34,6 +40,15 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _startTicker();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant HistoryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.revision != widget.revision ||
+        oldWidget.repository != widget.repository) {
+      _load();
+    }
   }
 
   void _startTicker() {

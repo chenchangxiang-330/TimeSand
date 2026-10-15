@@ -11,9 +11,14 @@ import '../bottles/bottle_detail_page.dart';
 import '../history/history_page.dart';
 
 class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({required this.repository, super.key});
+  const StatisticsPage({
+    required this.repository,
+    this.revision = 0,
+    super.key,
+  });
 
   final TimeRecordsRepository repository;
+  final int revision;
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -37,6 +42,15 @@ class _StatisticsPageState extends State<StatisticsPage>
     WidgetsBinding.instance.addObserver(this);
     _startTicker();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant StatisticsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.revision != widget.revision ||
+        oldWidget.repository != widget.repository) {
+      _load();
+    }
   }
 
   void _startTicker() {
