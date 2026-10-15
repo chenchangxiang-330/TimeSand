@@ -329,6 +329,53 @@ void main() {
       },
     );
   }
+  testWidgets('deleting an active history entry refreshes the global timer', (
+    tester,
+  ) async {
+    final bottle = await repository.createBottle(
+      name: '跨页计时',
+      color: 0xFF8EBCA8,
+    );
+    await _pumpHome(
+      tester,
+      repository,
+      size: const Size(390, 844),
+      clock: DateTime.now,
+    );
+    final start = find.byKey(ValueKey('start-${bottle.id}'));
+    await _reveal(tester, start);
+    await tester.tap(start);
+    await tester.pumpAndSettle();
+    final active = await repository.fetchActiveEntry();
+    expect(active, isNotNull);
+    expect(find.byKey(const ValueKey('stop-timer-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('nav-history')));
+    await tester.pumpAndSettle();
+    expect(find.byType(HistoryPage), findsOneWidget);
+    final delete = find.byKey(ValueKey('delete-entry-${active!.id}'));
+    await _reveal(tester, delete);
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    expect(find.text('删除时间记录？'), findsOneWidget);
+    expect(await repository.fetchActiveEntry(), isNotNull);
+    final confirm = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.widgetWithText(FilledButton, '删除'),
+    );
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+
+    // Check the shared shell immediately, without navigating home or resuming
+    // the app: a child-page mutation must invalidate its parent's cache.
+    expect(find.byType(HistoryPage), findsOneWidget);
+    expect(await repository.fetchActiveEntry(), isNull);
+    expect(await repository.fetchEntries(), isEmpty);
+    expect(find.byKey(const ValueKey('stop-timer-button')), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
 }
 
 Future<void> _pumpHome(
