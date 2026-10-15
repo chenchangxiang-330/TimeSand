@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/database/time_records_repository.dart';
 import '../../core/records/time_models.dart';
+import '../../core/time/record_time_input.dart';
 
 class EntryEditorPage extends StatefulWidget {
   const EntryEditorPage({
@@ -80,40 +81,14 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     );
   }
 
-  DateTime _parse(String value) {
-    final input = value.trim();
-    final match = RegExp(
-      r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?(Z|[+-]\d{2}:\d{2})$',
-    ).firstMatch(input);
-    if (match == null) throw const FormatException('请保留日期、秒数和时区偏移。');
-    final parts = [for (var i = 1; i <= 6; i++) int.parse(match.group(i)!)];
-    final calendar = DateTime.utc(
-      parts[0],
-      parts[1],
-      parts[2],
-      parts[3],
-      parts[4],
-      parts[5],
-    );
-    if (calendar.year != parts[0] ||
-        calendar.month != parts[1] ||
-        calendar.day != parts[2] ||
-        calendar.hour != parts[3] ||
-        calendar.minute != parts[4] ||
-        calendar.second != parts[5]) {
-      throw const FormatException('日期或时间不存在。');
-    }
-    return DateTime.parse(input);
-  }
-
   Future<void> _save() async {
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      final start = _parse(_start.text);
-      final end = _parse(_end.text);
+      final start = parseRecordTime(_start.text, requireOffset: true);
+      final end = parseRecordTime(_end.text, requireOffset: true);
       if (end.isAfter(DateTime.now())) {
         throw const FormatException('结束时间不能在未来。');
       }

@@ -31,6 +31,19 @@ void main() {
     expect(tester.takeException(), isNull);
   }
 
+  testWidgets('manual input rejects normalized nonexistent dates', (tester) async {
+    await open(tester);
+    await tester.tap(find.byKey(const ValueKey('manual-entry-button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('manual-start-input')), '2020-02-30 09:00');
+    await tester.enterText(find.byKey(const ValueKey('manual-end-input')), '2020-03-01 10:00');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(find.text('请输入有效日期和时间。'), findsOneWidget);
+    expect(await repo.fetchEntries(), hasLength(1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editing preserves seconds and refreshes totals', (tester) async {
     await open(tester);
     await tester.ensureVisible(find.byKey(const ValueKey('edit-entry-1')));

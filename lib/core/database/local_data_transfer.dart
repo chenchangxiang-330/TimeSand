@@ -154,7 +154,8 @@ abstract final class LocalDataTransfer {
     return rows.map((row) => row.map(_csvCell).join(',')).join('\n') + '\n';
   }
 
-  static LocalDataBundle parseJson(String raw) {
+  static LocalDataBundle parseJson(String raw, {DateTime? now}) {
+    final referenceNow = now ?? DateTime.now();
     if (utf8.encode(raw).length > 20 * 1024 * 1024) {
       throw const LocalDataTransferException('备份文件不能超过 20 MiB。');
     }
@@ -239,6 +240,10 @@ abstract final class LocalDataTransfer {
         throw const LocalDataTransferException('缺少结束时间或时长字段。');
       }
       final endedAt = _optionalDate(value['ended_at']);
+      if (startedAt.isAfter(referenceNow) ||
+          (endedAt != null && endedAt.isAfter(referenceNow))) {
+        throw const LocalDataTransferException('时间记录不能位于未来。');
+      }
       final source = TimeEntrySourceCodec.parse(
         _requiredString(value, 'source'),
       );
@@ -271,7 +276,7 @@ abstract final class LocalDataTransfer {
               ? null
               : endedAt.difference(startedAt).inSeconds,
           source: source,
-          notes: value.containsKey('notes')
+          notes: schemaVersion >= 2 || value.containsKey('notes')
               ? _requiredString(value, 'notes')
               : '',
           createdAt: _requiredDate(value, 'created_at'),

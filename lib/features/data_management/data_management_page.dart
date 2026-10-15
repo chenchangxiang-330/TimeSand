@@ -136,6 +136,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
+          scrollable: true,
           title: const Text('确认导入'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -147,16 +148,17 @@ class _DataManagementPageState extends State<DataManagementPage> {
               Text('时间记录：' + preview.entryCount.toString() + ' 条'),
               const SizedBox(height: 16),
               DropdownButtonFormField<ImportMode>(
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: '导入模式'),
                 initialValue: mode,
                 items: const [
                   DropdownMenuItem(
                     value: ImportMode.merge,
-                    child: Text('合并导入：保留当前数据'),
+                    child: Text('合并导入：保留当前数据', overflow: TextOverflow.ellipsis),
                   ),
                   DropdownMenuItem(
                     value: ImportMode.replace,
-                    child: Text('覆盖恢复：替换当前数据'),
+                    child: Text('覆盖恢复：替换当前数据', overflow: TextOverflow.ellipsis),
                   ),
                 ],
                 onChanged: (value) {
@@ -189,6 +191,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+          scrollable: true,
         title: const Text('确认覆盖恢复？'),
         content: const Text('当前瓶子和时间记录将被备份内容替换，原有数据不会自动保留。'),
         actions: [

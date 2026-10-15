@@ -5,6 +5,7 @@ import '../../core/records/time_format.dart';
 import '../../core/records/time_models.dart';
 import '../../core/records/time_statistics.dart';
 import '../../core/time/day_window.dart';
+import '../../core/time/record_time_input.dart';
 import 'history_filter.dart';
 import 'entry_editor_page.dart';
 
@@ -119,13 +120,10 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                       subtitle: Text(
                         '${filteredEntries.length} 条记录 · '
-                        '筛选范围 ${formatRecordDuration(total)}',
+                        '筛选范围 ${formatRecordDuration(total)}' +
+                        (dayStats == null ? '' :
+                          '\n海洋 ${formatRecordDuration(dayStats.unallocated)}'),
                       ),
-                      trailing: dayStats == null
-                          ? null
-                          : Text(
-                              '海洋 ${formatRecordDuration(dayStats.unallocated)}',
-                            ),
                     ),
                   ),
                   if (_selectedBottleId != null)
@@ -441,6 +439,7 @@ class _HistoryPageState extends State<HistoryPage> {
               children: [
                 if (initialStart == null)
                   DropdownButtonFormField<Bottle>(
+                    isExpanded: true,
                     initialValue: selectedBottle,
                     decoration: const InputDecoration(labelText: '时间之瓶'),
                     items: [
@@ -449,7 +448,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       ))
                         DropdownMenuItem(
                           value: bottle,
-                          child: Text(bottle.name),
+                          child: Text(bottle.name, overflow: TextOverflow.ellipsis),
                         ),
                     ],
                     onChanged: (value) {
@@ -459,6 +458,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     },
                   ),
                 TextField(
+                  key: const ValueKey('manual-start-input'),
                   controller: startController,
                   decoration: const InputDecoration(
                     labelText: '开始时间',
@@ -467,6 +467,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 if (inputError != null) Text(inputError!),
                 TextField(
+                  key: const ValueKey('manual-end-input'),
                   controller: endController,
                   decoration: const InputDecoration(
                     labelText: '结束时间',
@@ -484,8 +485,8 @@ class _HistoryPageState extends State<HistoryPage> {
             FilledButton(
               onPressed: () {
                 try {
-                  final start = DateTime.parse(startController.text.trim());
-                  final end = DateTime.parse(endController.text.trim());
+                  final start = parseRecordTime(startController.text);
+                  final end = parseRecordTime(endController.text);
                   if (!end.isAfter(start) || end.isAfter(DateTime.now())) {
                     setDialogState(() => inputError = '结束时间必须晚于开始时间，且不能在未来。');
                     return;

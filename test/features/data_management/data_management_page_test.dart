@@ -40,23 +40,30 @@ void main() {
   tearDown(() => database.close());
 
   Future<void> open(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(320, 850);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
         home: DataManagementPage(repository: repo, files: files),
       ),
     );
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   }
 
   testWidgets('exports JSON and reports save failure', (tester) async {
     await open(tester);
     await tester.tap(find.byKey(const ValueKey('export-json-button')));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(jsonDecode(files.saved!)['format_version'], 1);
     expect(find.text('文件已保存。'), findsOneWidget);
     files.fail = true;
     await tester.tap(find.byKey(const ValueKey('export-csv-button')));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(find.textContaining('导出失败'), findsOneWidget);
   });
 
@@ -68,6 +75,7 @@ void main() {
     await open(tester);
     await tester.tap(find.byKey(const ValueKey('import-json-button')));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(find.textContaining('导入失败'), findsOneWidget);
     expect((await repo.fetchBottles()).single.name, '保留');
   });
@@ -80,30 +88,40 @@ void main() {
     await open(tester);
     await tester.tap(find.byKey(const ValueKey('import-json-button')));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(find.text('确认导入'), findsOneWidget);
     expect(find.text('合并导入：保留当前数据'), findsOneWidget);
     await tester.tap(find.byType(DropdownButtonFormField<ImportMode>));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tap(find.text('覆盖恢复：替换当前数据').last);
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tap(find.text('查看并确认'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(find.text('确认覆盖恢复？'), findsOneWidget);
     expect(await repo.fetchBottles(), hasLength(1));
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(await repo.fetchBottles(), hasLength(1));
 
     await tester.tap(find.byKey(const ValueKey('import-json-button')));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tap(find.byType(DropdownButtonFormField<ImportMode>));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tap(find.text('覆盖恢复：替换当前数据').last);
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tap(find.text('查看并确认'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tap(find.text('确认覆盖'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     expect(await repo.fetchBottles(), isEmpty);
     expect(find.textContaining('导入成功'), findsOneWidget);
   });

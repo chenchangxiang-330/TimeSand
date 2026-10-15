@@ -68,7 +68,7 @@ JSON 格式版本为 1，稳定顶层字段：
 时区字段表示导出时设备信息，不改变记录的绝对时间。
 记录含 `id`、`bottle_id`、`started_at`、`ended_at`、`duration_seconds`、
 `source`、`created_at`、`updated_at` 和 `notes`。
-活动记录的 ended_at 与 duration_seconds 为 null。旧备份缺少 notes 时默认为空。
+活动记录的 ended_at 与 duration_seconds 为 null。schema 1 备份缺少 notes 时默认为空；schema 2 必须包含该字段。
 
 CSV 表头：
 
@@ -80,7 +80,7 @@ CSV 使用 UTC 时间、逗号分隔、引号转义；公式式文本加前导�
 CSV 用于查看，不作为恢复格式。
 
 导入会校验格式和数据库版本、必需字段和类型、有效 UTC 日期、正整数 ID、
-唯一 ID、瓶子引用、时长一致性、重叠区间和活动记录唯一性。任何错误拒绝整份文件。
+唯一 ID、瓶子引用、时长一致性、重叠区间和活动记录唯一性；拒绝未来开始或结束的记录。任何错误拒绝整份文件。
 
 默认“合并导入”保留当前数据，为所有导入瓶子和记录分配新 ID 并重映射引用；
 不按名称合并或自动去重，时间冲突会拒绝整个导入（重复导入相同记录也会被拒绝）。
