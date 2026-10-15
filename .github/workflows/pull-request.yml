@@ -19,6 +19,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.7'
           cache: true
 
       - name: Print Flutter and Dart versions
@@ -50,6 +51,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.7'
           cache: true
 
       - name: Install dependencies
@@ -82,6 +84,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.7'
           cache: true
 
       - name: Install dependencies
@@ -91,6 +94,10 @@ jobs:
         run: |
           rm -rf macos
           flutter create --platforms=macos --project-name timesand --org com.timesand --no-pub .
+          for entitlements in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
+            /usr/libexec/PlistBuddy -c "Add :com.apple.security.files.user-selected.read-write bool true" "$entitlements" || \
+              /usr/libexec/PlistBuddy -c "Set :com.apple.security.files.user-selected.read-write true" "$entitlements"
+          done
 
       - name: Build unsigned development app
         run: flutter build macos --debug

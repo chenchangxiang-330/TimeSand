@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import '../../core/database/time_records_repository.dart';
 import '../../core/records/time_format.dart';
 import '../../core/records/time_models.dart';
+import '../../core/records/time_statistics.dart';
+import '../../core/time/day_window.dart';
+import '../../core/time/record_time_input.dart';
+import 'history_filter.dart';
+import 'entry_editor_page.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({required this.repository, super.key});
@@ -17,6 +22,9 @@ class _HistoryPageState extends State<HistoryPage> {
   List<TimeEntry> _entries = const [];
   List<Bottle> _bottles = const [];
   bool _loading = true;
+  DateTime? _selectedDate;
+  DateTime? _selectedMonth;
+  int? _selectedBottleId;
 
   @override
   void initState() {
@@ -40,9 +48,45 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     final names = <int, String>{
       for (final bottle in _bottles) bottle.id!: bottle.name,
     };
+    final filteredEntries = HistoryFilter.apply(
+      entries: _entries,
+      date: _selectedDate,
+      month: _selectedMonth,
+      bottleId: _selectedBottleId,
+      now: now,
+    );
+    final dayStats = _selectedDate == null
+        ? null
+        : TimeStatistics.forDate(
+            date: _selectedDate!,
+            now: now,
+            entries: _entries,
+          );
+    final total = filteredEntries.fold<Duration>(Duration.zero, (sum, entry) {
+      if (_selectedDate != null) {
+        return sum +
+            HistoryFilter.intersectionDuration(
+              entry: entry,
+              start: DayWindow.forDate(_selectedDate!).start,
+              end: DayWindow.forDate(_selectedDate!).end,
+              now: now,
+            );
+      }
+      if (_selectedMonth != null) {
+        return sum +
+            HistoryFilter.intersectionDuration(
+              entry: entry,
+              start: DateTime(_selectedMonth!.year, _selectedMonth!.month),
+              end: DateTime(_selectedMonth!.year, _selectedMonth!.month + 1),
+              now: now,
+            );
+      }
+      return sum + entry.durationAt(now);
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -52,7 +96,7 @@ class _HistoryPageState extends State<HistoryPage> {
             key: const ValueKey('manual-entry-button'),
             tooltip: '补录时间',
             icon: const Icon(Icons.edit_calendar_outlined),
-            onPressed: _bottles.isEmpty
+            onPressed: !_bottles.any((bottle) => !bottle.isArchived)
                 ? null
                 : () => _createManualEntry(context),
           ),
@@ -62,51 +106,257 @@ class _HistoryPageState extends State<HistoryPage> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
-              child: _entries.isEmpty
-                  ? ListView(
-                      children: const [
-                        SizedBox(height: 120),
-                        Center(child: Text('还没有历史投入记录。')),
-                      ],
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                      children: [
-                        for (final entry in _entries.reversed)
-                          Card(
-                            child: ListTile(
-                              leading: Icon(
-                                entry.source == TimeEntrySource.active
-                                    ? Icons.timer_outlined
-                                    : Icons.edit_calendar_outlined,
-                              ),
-                              title: Text(names[entry.bottleId] ?? '已归档的时间之瓶'),
-                              subtitle: Text(_formatInterval(entry)),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    formatRecordDuration(
-                                      entry.durationAt(DateTime.now()),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: '删除记录',
-                                    onPressed: () => _deleteEntry(entry),
-                                    icon: const Icon(Icons.delete_outline),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                children: [
+                  _buildFilters(context),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.insights_outlined),
+                      title: Text(
+                        dayStats == null
+                            ? '筛选结果'
+                            : '当天投入 ${formatRecordDuration(dayStats.recorded)}',
+                      ),
+                      subtitle: Text(
+                        '${filteredEntries.length} 条记录 · '
+                                '筛选范围 ${formatRecordDuration(total)}' +
+                            (dayStats == null
+                                ? ''
+                                : '\n海洋 ${formatRecordDuration(dayStats.unallocated)}'),
+                      ),
                     ),
+                  ),
+                  if (_selectedBottleId != null)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        '该瓶永久累计：' +
+                            formatRecordDuration(
+                              TimeStatistics.lifetime(
+                                bottleId: _selectedBottleId!,
+                                now: now,
+                                entries: _entries,
+                              ).total,
+                            ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  if (filteredEntries.isEmpty)
+                    const Card(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 36),
+                        child: Center(child: Text('还没有历史投入记录。')),
+                      ),
+                    )
+                  else
+                    for (final entry in filteredEntries.reversed)
+                      _buildEntryCard(context, entry, names, now),
+                ],
+              ),
             ),
     );
   }
 
+  Widget _buildFilters(BuildContext context) {
+    final theme = Theme.of(context);
+    final bottleLabel = _selectedBottleId == null
+        ? '全部时间之瓶'
+        : _bottles
+              .firstWhere(
+                (bottle) => bottle.id == _selectedBottleId,
+                orElse: () => _bottles.first,
+              )
+              .name;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('筛选历史', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const ValueKey('history-date-filter'),
+                  onPressed: () => _chooseDate(context),
+                  icon: const Icon(Icons.calendar_today_outlined),
+                  label: Text(
+                    _selectedDate == null ? '按日期' : _formatDate(_selectedDate!),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('history-month-filter'),
+                  onPressed: () => _chooseMonth(context),
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  label: Text(
+                    _selectedMonth == null
+                        ? '按月份'
+                        : _formatMonth(_selectedMonth!),
+                  ),
+                ),
+                DropdownButton<int?>(
+                  key: const ValueKey('history-bottle-filter'),
+                  isExpanded: false,
+                  value: _selectedBottleId,
+                  hint: Text(bottleLabel),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('全部时间之瓶'),
+                    ),
+                    for (final bottle in _bottles)
+                      DropdownMenuItem<int?>(
+                        value: bottle.id,
+                        child: SizedBox(
+                          width: 160,
+                          child: Text(
+                            bottle.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    setState(() => _selectedBottleId = value);
+                  },
+                ),
+                if (_selectedDate != null ||
+                    _selectedMonth != null ||
+                    _selectedBottleId != null)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = null;
+                        _selectedMonth = null;
+                        _selectedBottleId = null;
+                      });
+                    },
+                    child: const Text('清除筛选'),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEntryCard(
+    BuildContext context,
+    TimeEntry entry,
+    Map<int, String> names,
+    DateTime now,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              names[entry.bottleId] ?? '已归档的时间之瓶',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(_formatInterval(entry)),
+            Text(formatRecordDuration(entry.durationAt(now))),
+            Wrap(
+              children: [
+                TextButton.icon(
+                  key: ValueKey('edit-entry-${entry.id}'),
+                  onPressed: entry.isActive
+                      ? null
+                      : () => _editEntry(context, entry),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text(entry.isActive ? '请先停止计时再编辑' : '编辑记录'),
+                ),
+                TextButton.icon(
+                  key: ValueKey('delete-entry-${entry.id}'),
+                  onPressed: () => _deleteEntry(entry),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('删除记录'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _chooseDate(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (date != null && mounted) {
+      setState(() {
+        _selectedDate = date;
+        _selectedMonth = null;
+      });
+    }
+  }
+
+  Future<void> _chooseMonth(BuildContext context) async {
+    var year = (_selectedMonth ?? DateTime.now()).year;
+    var month = (_selectedMonth ?? DateTime.now()).month;
+    final selected = await showDialog<DateTime>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('选择月份'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButton<int>(
+                key: const ValueKey('history-year-choice'),
+                value: year,
+                items: [
+                  for (var y = 2000; y <= 2100; y++)
+                    DropdownMenuItem(value: y, child: Text('$y 年')),
+                ],
+                onChanged: (value) => setDialogState(() => year = value!),
+              ),
+              DropdownButton<int>(
+                key: const ValueKey('history-month-choice'),
+                value: month,
+                items: [
+                  for (var m = 1; m <= 12; m++)
+                    DropdownMenuItem(value: m, child: Text('$m 月')),
+                ],
+                onChanged: (value) => setDialogState(() => month = value!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, DateTime(year, month)),
+              child: const Text('选择'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() {
+        _selectedMonth = selected;
+        _selectedDate = null;
+      });
+    }
+  }
+
   Future<void> _createManualEntry(BuildContext context) async {
-    final result = await _showManualEntryDialog(context);
+    final result = await _showEntryDialog(context);
     if (result == null) {
       return;
     }
@@ -117,13 +367,21 @@ class _HistoryPageState extends State<HistoryPage> {
         endedAt: result.$3,
       );
       await _load();
+      _showMessage(context, '已保存时间记录。');
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
-      }
+      _showMessage(context, '保存失败：$error');
     }
+  }
+
+  Future<void> _editEntry(BuildContext context, TimeEntry entry) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            EntryEditorPage(repository: widget.repository, entry: entry),
+      ),
+    );
+    if (changed == true && mounted) await _load();
   }
 
   Future<void> _deleteEntry(TimeEntry entry) async {
@@ -145,50 +403,75 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     );
     if (shouldDelete == true) {
-      await widget.repository.deleteEntry(entry.id!);
-      await _load();
+      try {
+        await widget.repository.deleteEntry(entry.id!);
+        await _load();
+        _showMessage(context, '已删除时间记录，统计已重新计算。');
+      } catch (error) {
+        _showMessage(context, '删除失败：$error');
+      }
     }
   }
 
-  Future<(Bottle, DateTime, DateTime)?> _showManualEntryDialog(
-    BuildContext context,
-  ) async {
+  Future<(Bottle, DateTime, DateTime)?> _showEntryDialog(
+    BuildContext context, {
+    DateTime? initialStart,
+    DateTime? initialEnd,
+  }) async {
     final now = DateTime.now();
     final startController = TextEditingController(
-      text: _formatInput(now.subtract(const Duration(hours: 1))),
+      text: _formatInput(
+        initialStart ?? now.subtract(const Duration(hours: 1)),
+      ),
     );
-    final endController = TextEditingController(text: _formatInput(now));
-    Bottle selectedBottle = _bottles.first;
+    final endController = TextEditingController(
+      text: _formatInput(initialEnd ?? now),
+    );
+    Bottle selectedBottle = _bottles.firstWhere((bottle) => !bottle.isArchived);
+    String? inputError;
     final result = await showDialog<(Bottle, DateTime, DateTime)>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('补录时间'),
+          title: Text(initialStart == null ? '补录时间' : '编辑时间记录'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                DropdownButtonFormField<Bottle>(
-                  initialValue: selectedBottle,
-                  decoration: const InputDecoration(labelText: '时间之瓶'),
-                  items: [
-                    for (final bottle in _bottles)
-                      DropdownMenuItem(value: bottle, child: Text(bottle.name)),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setDialogState(() => selectedBottle = value);
-                    }
-                  },
-                ),
+                if (initialStart == null)
+                  DropdownButtonFormField<Bottle>(
+                    isExpanded: true,
+                    initialValue: selectedBottle,
+                    decoration: const InputDecoration(labelText: '时间之瓶'),
+                    items: [
+                      for (final bottle in _bottles.where(
+                        (bottle) => !bottle.isArchived,
+                      ))
+                        DropdownMenuItem(
+                          value: bottle,
+                          child: Text(
+                            bottle.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setDialogState(() => selectedBottle = value);
+                      }
+                    },
+                  ),
                 TextField(
+                  key: const ValueKey('manual-start-input'),
                   controller: startController,
                   decoration: const InputDecoration(
                     labelText: '开始时间',
                     hintText: '2026-10-13 09:00',
                   ),
                 ),
+                if (inputError != null) Text(inputError!),
                 TextField(
+                  key: const ValueKey('manual-end-input'),
                   controller: endController,
                   decoration: const InputDecoration(
                     labelText: '结束时间',
@@ -206,13 +489,15 @@ class _HistoryPageState extends State<HistoryPage> {
             FilledButton(
               onPressed: () {
                 try {
-                  final start = DateTime.parse(startController.text.trim());
-                  final end = DateTime.parse(endController.text.trim());
-                  if (!end.isAfter(start)) {
+                  final start = parseRecordTime(startController.text);
+                  final end = parseRecordTime(endController.text);
+                  if (!end.isAfter(start) || end.isAfter(DateTime.now())) {
+                    setDialogState(() => inputError = '结束时间必须晚于开始时间，且不能在未来。');
                     return;
                   }
                   Navigator.pop(dialogContext, (selectedBottle, start, end));
                 } on FormatException {
+                  setDialogState(() => inputError = '请输入有效日期和时间。');
                   return;
                 }
               },
@@ -229,25 +514,42 @@ class _HistoryPageState extends State<HistoryPage> {
 
   String _formatInterval(TimeEntry entry) {
     final start = entry.startedAt.toLocal();
-    final date =
-        start.year.toString() +
-        '-' +
-        start.month.toString().padLeft(2, '0') +
-        '-' +
-        start.day.toString().padLeft(2, '0');
-    final time = start.toString().substring(11, 16);
-    return entry.endedAt == null ? '$date $time · 进行中' : '$date $time';
+    final date = _formatDate(start);
+    final startTime = start.toString().substring(11, 16);
+    if (entry.endedAt == null) {
+      return '$date $startTime · 进行中';
+    }
+    final end = entry.endedAt!.toLocal();
+    return '$date $startTime - ${_formatDate(end)} ${end.toString().substring(11, 16)}';
   }
 
-  String _formatInput(DateTime value) {
-    return value.year.toString().padLeft(4, '0') +
+  String _formatDate(DateTime value) {
+    return value.year.toString() +
         '-' +
         value.month.toString().padLeft(2, '0') +
         '-' +
-        value.day.toString().padLeft(2, '0') +
+        value.day.toString().padLeft(2, '0');
+  }
+
+  String _formatMonth(DateTime value) {
+    return value.year.toString() + '-' + value.month.toString().padLeft(2, '0');
+  }
+
+  String _formatInput(DateTime value) {
+    final local = value.toLocal();
+    return _formatDate(local) +
         ' ' +
-        value.hour.toString().padLeft(2, '0') +
+        local.hour.toString().padLeft(2, '0') +
         ':' +
-        value.minute.toString().padLeft(2, '0');
+        local.minute.toString().padLeft(2, '0');
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

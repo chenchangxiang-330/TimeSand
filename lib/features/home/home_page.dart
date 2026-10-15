@@ -8,6 +8,7 @@ import '../../core/records/time_models.dart';
 import '../../core/records/time_statistics.dart';
 import '../../core/time/day_window.dart';
 import '../bottles/bottle_detail_page.dart';
+import '../data_management/data_management_page.dart';
 import '../history/history_page.dart';
 import '../hourglass/hourglass_placeholder.dart';
 
@@ -114,6 +115,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         title: const Text('TimeSand'),
         actions: [
+          IconButton(
+            key: const ValueKey('data-management-button'),
+            tooltip: '本地数据',
+            icon: const Icon(Icons.import_export_rounded),
+            onPressed: () => _openDataManagement(context),
+          ),
           IconButton(
             key: const ValueKey('history-button'),
             tooltip: '历史记录',
@@ -480,13 +487,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return result;
   }
 
-  void _openHistory(BuildContext context) {
-    Navigator.push(
+  Future<void> _openHistory(BuildContext context) async {
+    await Navigator.push<void>(
       context,
       MaterialPageRoute<void>(
         builder: (_) => HistoryPage(repository: widget.repository),
       ),
     );
+    if (mounted) {
+      await _load();
+    }
+  }
+
+  Future<void> _openDataManagement(BuildContext context) async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => DataManagementPage(repository: widget.repository),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   void _openBottle(BuildContext context, Bottle bottle) {
