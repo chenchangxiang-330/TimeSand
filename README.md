@@ -18,7 +18,7 @@ TimeSand（时间之沙）是一款面向个人成长的艺术化时间管理 Ap
 - 所有时长来自系统时钟和 SQLite 起止时间。动画只作装饰，遵守系统减少动画、路由可见性与后台生命周期。
 - 磨砂模糊限制在侧栏、导航和汇总卡片；表单采用较高不透明度确保可读。
 
-实际 Widget 渲染截图见 [手机](docs/ui/phone.png)、[手机下部](docs/ui/phone-scroll.png)、[桌面](docs/ui/desktop.png)。这些是云端 Flutter 实际实现的截图，使用明确的内存测试样本和固定测试时钟，不是设计图或真实用户数据；生产 App 不加载这些样本。
+实际 Widget 渲染截图见 [手机](docs/ui/phone.png)、[手机开始操作](docs/ui/phone-idle.png)、[手机计时中](docs/ui/phone-active.png)、[手机下部](docs/ui/phone-scroll.png)、[桌面](docs/ui/desktop.png)。这些是云端 Flutter 实际实现的截图，使用明确的内存测试样本和固定测试时钟，不是设计图或真实用户数据；生产 App 不加载这些样本。
 
 背景为云端程序生成的原创场景，源码与来源说明见 [资产说明](assets/scenes/README.md)。画面比参考图更偏柔和插画；没有照片级玻璃折射或真实流体模拟。参考图中的设备外框、假状态栏和假窗口按钮不进入界面。
 
@@ -93,6 +93,7 @@ test/
   core/records/                统计和时间区间测试
   core/database/               SQLite 仓库和计时器恢复测试
   features/home/               首页与响应式交互回归
+  features/history/            日期筛选、编辑、删除和统计刷新
   visual/                      实际 Widget 截图测试
 assets/scenes/                 离线原创背景与来源说明
 tool/                          背景生成源码

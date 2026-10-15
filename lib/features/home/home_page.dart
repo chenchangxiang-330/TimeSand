@@ -688,19 +688,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ],
     ),
   );
-  Widget _navigationItem(String label, IconData icon, int tab, String key) =>
+  Widget _navigationItem(String label, IconData icon, int tab, String key, {bool calendar = false}) =>
       Expanded(
         child: Semantics(
-          selected: _tab == tab,
+          selected: (_tab == tab && (!calendar || _historyDate != null)),
           button: true,
           label: label,
           child: TextButton(
             key: ValueKey(key),
-            onPressed: () => _navigate(tab),
+            onPressed: () => _navigate(tab, calendar: calendar),
             style: TextButton.styleFrom(
-              foregroundColor: _tab == tab ? AppTheme.blue : AppTheme.muted,
+              foregroundColor: (_tab == tab && (!calendar || _historyDate != null)) ? AppTheme.blue : AppTheme.muted,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-              backgroundColor: _tab == tab
+              backgroundColor: (_tab == tab && (!calendar || _historyDate != null))
                   ? const Color(0x55CBE5FC)
                   : Colors.transparent,
             ),
@@ -827,6 +827,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               Icons.calendar_month_outlined,
               1,
               'dock-history',
+              calendar: true,
             ),
             _navigationItem('更多', Icons.more_horiz, 3, 'dock-settings'),
           ],
