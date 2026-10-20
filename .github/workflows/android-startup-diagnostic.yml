@@ -1,0 +1,44 @@
+name: Diagnose Android startup
+on:
+  push:
+    branches: [feat/glass-hourglass-ui]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the exact APK reported by the user
+        uses: actions/download-artifact@v4
+        with:
+          name: timesand-android-debug-pr
+          run-id: 39405161930
+          github-token: ${{ github.token }}
+          path: build/startup-apk
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Launch the shipped APK and capture startup evidence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: bash tool/android_startup_probe.sh build/startup-apk/app-debug.apk
+      - name: Upload startup logs and emulator screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: timesand-android-startup-diagnostic
+          path: build/android-startup-evidence
+          if-no-files-found: error
+          retention-days: 3
