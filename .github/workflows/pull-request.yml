@@ -31,7 +31,7 @@ jobs:
         run: flutter pub get
 
       - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test integration_test test_driver
 
       - name: Static analysis
         run: flutter analyze
@@ -56,8 +56,9 @@ jobs:
           retention-days: 3
 
   android:
-    name: Android debug APK
+    name: Android debug APK and runtime
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     needs: quality
     steps:
       - name: Check out source
@@ -81,11 +82,43 @@ jobs:
       - name: Build development APK
         run: flutter build apk --debug
 
+      - name: Preserve the production APK before building integration tests
+        run: |
+          mkdir -p build/startup-apk
+          cp build/app/outputs/flutter-apk/app-debug.apk build/startup-apk/app-debug.apk
+
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Verify production APK startup and real SQLite persistence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: bash tool/android_runtime_test.sh
+
+      - name: Upload emulator startup evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: timesand-android-runtime
+          path: build/android-startup-evidence
+          if-no-files-found: error
+          retention-days: 3
+
       - name: Upload development APK
         uses: actions/upload-artifact@v4
         with:
           name: timesand-android-debug-pr
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/startup-apk/app-debug.apk
+          if-no-files-found: error
           retention-days: 3
 
   macos:

@@ -59,6 +59,8 @@ Phase 2 只使用本地数据库，当前没有账户和云端数据备份。
 - Flutter 3.47.7 stable（工作流固定版本）
 - Dart 3.13.5
 - sqflite_common_ffi: 2.4.4，传递依赖由 pubspec.lock 锁定
+- path_provider: 2.1.6，用于 Android 应用私有数据目录（官方支持 Android/macOS）
+- integration_test：Flutter SDK 自带，仅用于 Android 模拟器启动与持久化测试
 - Android 和 macOS 共用同一套 Dart 业务代码
 - 运行时依赖保持最小化
 
@@ -96,6 +98,8 @@ test/
   features/home/               首页与响应式交互回归
   features/history/            日期筛选、编辑、删除和统计刷新
   visual/                      实际 Widget 截图测试
+integration_test/              Android 生产启动与真实磁盘持久化测试
+test_driver/                   Flutter 集成测试驱动
 assets/scenes/                 离线海景照片、原创回退背景与来源说明
 tool/                          资产处理源码及核实授权的原始照片
 docs/ui/                       云端实际实现截图
@@ -115,7 +119,11 @@ flutter pub get
 flutter run -d <device-id>
 ~~~
 
-应用启动时初始化 SQLite 数据库。默认数据库路径由 sqflite_common_ffi 提供；不同平台的具体目录以运行时为准。
+应用先显示加载界面，再初始化 SQLite；失败显示可重试提示，不自动清理或重置数据。
+
+Android 新数据库保存在 path_provider 返回的应用私有 Application Support 目录，文件名仍为 timesand.db。升级时先检查旧 FFI 默认路径：存在旧文件则原位使用；读取权限等异常会报错，不会静默切到空数据库。macOS 保持原有路径。数据库 schema 仍为 1，没有删除、重建或迁移已有表。
+
+此前 Android 安装后卡启动的问题已在云端 Android 15 模拟器复现为 SQLite code 14（数据库文件无法打开）；旧 FFI 路径来自进程工作目录，在 Android 上不可写。新增目录解析测试、启动失败/重试测试，以及真实生产入口与磁盘数据库的模拟器测试。
 
 清理本地数据时，请先退出应用：
 
@@ -127,7 +135,7 @@ flutter run -d <device-id>
 ## 测试与质量检查
 
 ~~~sh
-dart format --output=none --set-exit-if-changed lib test
+dart format --output=none --set-exit-if-changed lib test integration_test test_driver
 flutter analyze
 flutter test
 ~~~
@@ -149,7 +157,7 @@ flutter test
 RUN_UI_SCREENSHOTS=true flutter test test/visual/glass_screenshots_test.dart --concurrency=1
 ~~~
 
-输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。海景照片处理和原有回退背景重建使用 Python/Pillow 11.3.0；没有新增 Flutter 运行时依赖。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。
+输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。海景照片处理和原有回退背景重建使用 Python/Pillow 11.3.0，不参与 App 运行；Android 目录修复增加了 path_provider。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。
 
 ## GitHub Actions
 
@@ -163,6 +171,15 @@ Pull Request 工作流在 Ubuntu 和 macOS standard runner 上执行：
 6. Android Debug APK 构建
 7. macOS Debug App 构建
 8. 将完整 macOS .app 打包成 ZIP，验证 Contents、可执行文件和符号链接后上传
+9. 在标准 Ubuntu runner 上启动 Android 15 模拟器，安装本次交付 APK、确认首页可见；再调用生产启动入口，创建瓶子、开始/停止计时、关闭并重开磁盘数据库验证恢复。最后覆盖安装原 APK 并再次启动。集成测试生成的 APK 不作为安装包交付。
+
+模拟器测试可以使用以下命令运行（需要已启动的 Android 模拟器）：
+
+~~~sh
+flutter drive -d emulator-5554 --driver=test_driver/integration_test.dart --target=integration_test/app_startup_test.dart
+~~~
+
+启动日志、模拟器截图和集成测试结果保存在 timesand-android-runtime Artifact 中；模拟器验证仍不能替代用户手机验收。
 
 手动构建工作流通过 workflow_dispatch 触发，并上传 Android APK 和 macOS ZIP。Artifacts 保留 3 天，不使用付费 Larger Runner。macOS 构建未签名、未公证。
 
