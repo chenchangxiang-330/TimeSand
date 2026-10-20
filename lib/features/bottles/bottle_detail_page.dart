@@ -50,7 +50,8 @@ class _BottleDetailPageState extends State<BottleDetailPage>
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
       final now = _readClock();
-      final dateChanged = now.year != _now.year ||
+      final dateChanged =
+          now.year != _now.year ||
           now.month != _now.month ||
           now.day != _now.day;
       if (dateChanged || _entries.any((entry) => entry.isActive)) {

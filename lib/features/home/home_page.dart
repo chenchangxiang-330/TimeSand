@@ -402,7 +402,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           spacing: 12,
           runSpacing: 6,
           children: [
-            const Text('今日 · 时间之瓶', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+            const Text(
+              '今日 · 时间之瓶',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            ),
             TextButton.icon(
               key: const ValueKey('create-bottle-button'),
               onPressed: () => _createBottle(context),

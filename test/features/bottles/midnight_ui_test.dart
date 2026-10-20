@@ -39,65 +39,69 @@ void main() {
     expect(tester.takeException(), isNull);
   }
 
-  testWidgets('idle bottle detail resets today at midnight and preserves history', (
-    tester,
-  ) async {
-    var now = DateTime(2020, 1, 1, 23, 59, 58);
-    await open(
-      tester,
-      BottleDetailPage(
-        repository: repository,
-        bottle: bottle,
-        clock: () => now,
-      ),
-      const Size(420, 1000),
-    );
-    expect(await repository.fetchActiveEntry(), isNull);
-    expect(find.text('今天 1小时 00分'), findsOneWidget);
-    expect(tester.widget<GlassBottle>(find.byType(GlassBottle)).fill, greaterThan(0));
+  testWidgets(
+    'idle bottle detail resets today at midnight and preserves history',
+    (tester) async {
+      var now = DateTime(2020, 1, 1, 23, 59, 58);
+      await open(
+        tester,
+        BottleDetailPage(
+          repository: repository,
+          bottle: bottle,
+          clock: () => now,
+        ),
+        const Size(420, 1000),
+      );
+      expect(await repository.fetchActiveEntry(), isNull);
+      expect(find.text('今天 1小时 00分'), findsOneWidget);
+      expect(
+        tester.widget<GlassBottle>(find.byType(GlassBottle)).fill,
+        greaterThan(0),
+      );
 
-    now = DateTime(2020, 1, 2, 0, 0, 1);
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
-    expect(find.text('今天 0秒'), findsOneWidget);
-    expect(find.text('今天 1小时 00分'), findsNothing);
-    expect(tester.widget<GlassBottle>(find.byType(GlassBottle)).fill, 0);
-    expect(find.text('永久累计 · 1 条记录'), findsOneWidget);
-    expect(find.text('1小时 00分'), findsWidgets);
-    expect((await repository.fetchEntries()).single.durationSeconds, 3600);
-    expect(tester.takeException(), isNull);
-  });
+      now = DateTime(2020, 1, 2, 0, 0, 1);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.text('今天 0秒'), findsOneWidget);
+      expect(find.text('今天 1小时 00分'), findsNothing);
+      expect(tester.widget<GlassBottle>(find.byType(GlassBottle)).fill, 0);
+      expect(find.text('永久累计 · 1 条记录'), findsOneWidget);
+      expect(find.text('1小时 00分'), findsWidgets);
+      expect((await repository.fetchEntries()).single.durationSeconds, 3600);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('calendar navigation samples current clock after an idle tab crosses midnight', (
-    tester,
-  ) async {
-    await repository.createManualEntry(
-      bottleId: bottle.id!,
-      startedAt: DateTime(2020, 1, 2),
-      endedAt: DateTime(2020, 1, 2, 0, 1),
-    );
-    var now = DateTime(2020, 1, 1, 23, 59, 58);
-    await open(
-      tester,
-      HomePage(
-        repository: repository,
-        enableTicker: false,
-        clock: () => now,
-      ),
-      const Size(1280, 1000),
-    );
-    await tester.tap(find.byKey(const ValueKey('dock-statistics')));
-    await tester.pumpAndSettle();
-    expect(find.text('时间统计'), findsOneWidget);
+  testWidgets(
+    'calendar navigation samples current clock after an idle tab crosses midnight',
+    (tester) async {
+      await repository.createManualEntry(
+        bottleId: bottle.id!,
+        startedAt: DateTime(2020, 1, 2),
+        endedAt: DateTime(2020, 1, 2, 0, 1),
+      );
+      var now = DateTime(2020, 1, 1, 23, 59, 58);
+      await open(
+        tester,
+        HomePage(repository: repository, enableTicker: false, clock: () => now),
+        const Size(1280, 1000),
+      );
+      await tester.tap(find.byKey(const ValueKey('dock-statistics')));
+      await tester.pumpAndSettle();
+      expect(find.text('时间统计'), findsOneWidget);
 
-    now = DateTime(2020, 1, 2, 0, 2);
-    await tester.tap(find.byKey(const ValueKey('dock-history')));
-    await tester.pumpAndSettle();
-    expect(tester.widget<HistoryPage>(find.byType(HistoryPage)).initialDate, now);
-    expect(find.text('2020-01-02'), findsOneWidget);
-    expect(find.textContaining('1 条记录'), findsOneWidget);
-    expect(find.text('1分 00秒'), findsWidgets);
-    expect(await repository.fetchEntries(), hasLength(2));
-    expect(tester.takeException(), isNull);
-  });
+      now = DateTime(2020, 1, 2, 0, 2);
+      await tester.tap(find.byKey(const ValueKey('dock-history')));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<HistoryPage>(find.byType(HistoryPage)).initialDate,
+        now,
+      );
+      expect(find.text('2020-01-02'), findsOneWidget);
+      expect(find.textContaining('1 条记录'), findsOneWidget);
+      expect(find.text('1分 00秒'), findsWidgets);
+      expect(await repository.fetchEntries(), hasLength(2));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
