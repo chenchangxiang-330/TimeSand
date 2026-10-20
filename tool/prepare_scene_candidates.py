@@ -80,8 +80,9 @@ def main() -> None:
     for candidate in CANDIDATES:
         data = download_image(candidate["download_url"])
         with Image.open(io.BytesIO(data)) as source:
-            if source.format != "JPEG":
-                raise RuntimeError(f"{candidate['filename']} did not contain a JPEG image.")
+            image_format = source.format
+            if image_format not in {"JPEG", "PNG", "WEBP", "MPO"}:
+                raise RuntimeError(f"{candidate['filename']} has unsupported image format {image_format}.")
             source.verify()
         with Image.open(io.BytesIO(data)) as source:
             original_size = source.size
@@ -91,6 +92,7 @@ def main() -> None:
             raise RuntimeError(f"{candidate['filename']} is unexpectedly small.")
         record = {
             **candidate,
+            "image_format": image_format,
             "sha256": hashlib.sha256(data).hexdigest(),
             "byte_length": len(data),
             "width": original_size[0],
@@ -98,7 +100,7 @@ def main() -> None:
         }
         loaded.append((record, data, displayed))
         print(
-            f"Validated {record['filename']}: {record['width']}x{record['height']}, "
+            f"Validated {record['filename']}: {record['image_format']}, {record['width']}x{record['height']}, "
             f"{record['byte_length']} bytes, sha256 {record['sha256']}",
             flush=True,
         )
