@@ -15,12 +15,13 @@ TimeSand（时间之沙）是一款面向个人成长的艺术化时间管理 Ap
 - 瓶子点击查看永久累计，独立选择与开始按钮，保留新建、编辑和归档；已归档瓶子可从“我的”查看。
 - 海洋为当天已流逝减去有效记录时长；今日剩余单独标注。瓶子液面表示该瓶占今日已记录时长的比例，不代表目标完成率。
 - 记录页支持日期筛选、补录、编辑和删除确认；编辑仍经过现有区间与重叠校验。
+- 无活动计时的成长瓶详情也会在跨午夜后刷新当天数值；日历入口每次读取当前日期。
 - 所有时长来自系统时钟和 SQLite 起止时间。动画只作装饰，遵守系统减少动画、路由可见性与后台生命周期。
 - 磨砂模糊限制在侧栏、导航和汇总卡片；表单采用较高不透明度确保可读。
 
 实际 Widget 渲染截图见 [手机](docs/ui/phone.png)、[手机开始操作](docs/ui/phone-idle.png)、[手机计时中](docs/ui/phone-active.png)、[手机下部](docs/ui/phone-scroll.png)、[桌面](docs/ui/desktop.png)。这些是云端 Flutter 实际实现的截图，使用明确的内存测试样本和固定测试时钟，不是设计图或真实用户数据；生产 App 不加载这些样本。
 
-背景为云端程序生成的原创场景，源码与来源说明见 [资产说明](assets/scenes/README.md)。画面比参考图更偏柔和插画；没有照片级玻璃折射或真实流体模拟。参考图中的设备外框、假状态栏和假窗口按钮不进入界面。
+背景采用 Hommie09 以 CC0 发布的真实海上日出照片，在云端调整阴影、色彩和分辨率后离线打包；保留原创程序场景作为回退。来源、授权、处理脚本及哈希见 [资产说明](assets/scenes/README.md)。海面和云层比参考图更平静，玻璃使用实时绘制的厚壁、高光与弧形沙面，没有物理折射或流体模拟。参考图中的设备外框、假状态栏和假窗口按钮不进入界面。
 
 ## Phase 2 保留功能
 
@@ -95,8 +96,8 @@ test/
   features/home/               首页与响应式交互回归
   features/history/            日期筛选、编辑、删除和统计刷新
   visual/                      实际 Widget 截图测试
-assets/scenes/                 离线原创背景与来源说明
-tool/                          背景生成源码
+assets/scenes/                 离线海景照片、原创回退背景与来源说明
+tool/                          资产处理源码及核实授权的原始照片
 docs/ui/                       云端实际实现截图
 android/                       Android 宿主工程
 macos/                         macOS 宿主工程
@@ -148,7 +149,7 @@ flutter test
 RUN_UI_SCREENSHOTS=true flutter test test/visual/glass_screenshots_test.dart --concurrency=1
 ~~~
 
-输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。背景重建使用 Python/Pillow 11.3.0；没有新增 Flutter 运行时依赖。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。
+输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。海景照片处理和原有回退背景重建使用 Python/Pillow 11.3.0；没有新增 Flutter 运行时依赖。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。
 
 ## GitHub Actions
 

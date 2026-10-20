@@ -19,3 +19,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/scenes/coastal-light.png
+    - assets/scenes/coastal-sunrise.jpg

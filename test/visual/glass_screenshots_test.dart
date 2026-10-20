@@ -231,7 +231,7 @@ Future<void> _pumpScreenshotHome(
   Object? imageError;
   await tester.runAsync(
     () => precacheImage(
-      const AssetImage('assets/scenes/coastal-light.png'),
+      const AssetImage('assets/scenes/coastal-sunrise.jpg'),
       tester.element(find.byType(HomePage)),
       onError: (error, stackTrace) => imageError = error,
     ),

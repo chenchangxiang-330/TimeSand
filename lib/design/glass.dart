@@ -75,11 +75,15 @@ class ScenicBackground extends StatelessWidget {
       Positioned.fill(
         child: ExcludeSemantics(
           child: Image.asset(
-            'assets/scenes/coastal-light.png',
+            'assets/scenes/coastal-sunrise.jpg',
             fit: BoxFit.cover,
             alignment: const Alignment(0, .1),
             filterQuality: FilterQuality.medium,
-            errorBuilder: (_, error, stackTrace) => const SizedBox.shrink(),
+            errorBuilder: (_, error, stackTrace) => Image.asset(
+              'assets/scenes/coastal-light.png',
+              fit: BoxFit.cover,
+              excludeFromSemantics: true,
+            ),
           ),
         ),
       ),

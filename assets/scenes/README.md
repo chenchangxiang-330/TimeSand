@@ -1,7 +1,13 @@
-# Coastal light environment
+# TimeSand environment assets
 
-`coastal-light.png` is original procedural artwork created for TimeSand by `tool/generate_coastal_scene.py` in GitHub Actions. It contains only sky, clouds, warm light, distant coast and sea. No reference screenshot pixels, text, UI, logos, user data or external image downloads are used.
+## Coastal sunrise photograph
+The shipped `coastal-sunrise.jpg` is derived from [Sunrise Over the Ocean](https://commons.wikimedia.org/wiki/File:Sunrise_Over_the_Ocean.jpg), photographed by **Hommie09**, released under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The reviewed original bytes are preserved in `tool/scene_sources/Sunrise_Over_the_Ocean.jpg` (MPO primary frame).
 
-The script is the editable source (deterministic seed 24015; Pillow 11.3.0). There is no third-party image licence requirement for this asset. This note does not add a software licence to the repository.
+`tool/prepare_coastal_photo.py` checks the original SHA-256, resizes it, lifts shadows, reduces saturation, adds a soft cool-sky/warm-horizon/blue-water grade and removes metadata. It generates the bundled JPEG and `photo-source.json` with source, license, processing and hashes. Authoring uses Pillow 11.3.0 in GitHub Actions; runtime is entirely offline.
 
-Runtime uses the bundled PNG offline. Glass vessels and every label/control are rendered by Flutter. The procedural scene is softer and more illustrative than the photographic reference; it does not claim to reproduce physically correct refraction or fluid simulation.
+The photograph contains only natural sky, distant coast, sunlight and sea. No reference screenshot pixels, text, controls, logos or user data are used. Glass, sand, bottles, icons and all data/interaction remain live Flutter components. Its calm sea and wispy clouds differ from the reference's detailed waves and cloud forms.
+
+## Original procedural fallback
+`coastal-light.png` remains as a bundled fallback. It is original procedural artwork created by `tool/generate_coastal_scene.py` in GitHub Actions (seed 24015; Pillow 11.3.0), with no third-party image material.
+
+These image notices do not add or change the repository's software license.
