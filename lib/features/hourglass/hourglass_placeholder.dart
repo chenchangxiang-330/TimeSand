@@ -173,34 +173,110 @@ class _GlassHourglassPainter extends CustomPainter {
     return path..close();
   }
 
-  // Invert the bulb cross-section integral: decorative animation never changes
-  // these upper/lower sand volumes or the supplied real time progress.
-  double _levelForVolume(double fraction) {
-    if (fraction <= 0) return 0;
-    if (fraction >= 1) return 1;
-    var low = 0.0;
-    var high = 1.0;
+  // Resolve the curved sand surface against the actual interior cross-section.
+  // This is cached per progress value; animation frames only move light grains.
+  late final Path _outerGlass = _vessel();
+  late final Path _innerGlass = _vessel(inset: 3);
+  late final Path _glassWall = Path.combine(
+    PathOperation.difference,
+    _outerGlass,
+    _innerGlass,
+  );
+  late final _SandShape _upperSand = _sandShape(true, 1 - progress);
+  late final _SandShape _lowerSand = _sandShape(false, progress);
+
+  _SandShape _sandShape(bool upper, double fraction) {
+    final top = upper ? _top : _neck;
+    final bottom = upper ? _neck : _bottom;
+    final curvature = (upper ? -7.0 : 15.0) * math.sin(math.pi * fraction);
+    const slices = 192;
+    final step = (bottom - top) / slices;
+    final widths = List<double>.generate(slices, (i) {
+      final y = top + (i + 0.5) * step;
+      final level = upper
+          ? (_neck - y) / (_neck - _top)
+          : (y - _neck) / (_bottom - _neck);
+      return _radiusAt(level) - 3;
+    });
+    final total = widths.fold<double>(0, (sum, radius) => sum + radius * 2);
+    double areaBelow(double centerY) {
+      var area = 0.0;
+      for (var i = 0; i < slices; i++) {
+        final y = top + (i + 0.5) * step;
+        final radius = widths[i];
+        if (curvature.abs() < 0.0001) {
+          if (y >= centerY) area += radius * 2;
+        } else if (curvature > 0) {
+          if (y >= centerY) {
+            final reach = 80 * math.sqrt((y - centerY) / curvature);
+            area += math.min(radius, reach) * 2;
+          }
+        } else if (y >= centerY) {
+          area += radius * 2;
+        } else {
+          final hollow = 80 * math.sqrt((centerY - y) / -curvature);
+          area += math.max(0.0, radius - hollow) * 2;
+        }
+      }
+      return area;
+    }
+
+    var low = top - curvature.abs();
+    var high = bottom + curvature.abs();
     for (var i = 0; i < 24; i++) {
-      final t = (low + high) / 2;
-      final area =
-          (_neckRadius - 2) * t +
-          (_radius - _neckRadius) * (t * t * t - 0.5 * t * t * t * t) +
-          _bulge * (t / 2 - math.sin(2 * math.pi * t) / (4 * math.pi));
-      const total = (_radius + _neckRadius + _bulge - 4) / 2;
-      if (area / total < fraction) {
-        low = t;
+      final midpoint = (low + high) / 2;
+      if (areaBelow(midpoint) > total * fraction) {
+        low = midpoint;
       } else {
-        high = t;
+        high = midpoint;
       }
     }
-    return (low + high) / 2;
+    final centerY = fraction >= 1
+        ? top
+        : fraction <= 0
+        ? bottom
+        : (low + high) / 2;
+    final surface = Path();
+    final fill = Path();
+    final cap = Path();
+    for (var i = 0; i <= 60; i++) {
+      final x = 20 + i * 3.0;
+      final u = (x - _center) / 80;
+      final y = centerY + curvature * u * u;
+      if (i == 0) {
+        surface.moveTo(x, y);
+        fill.moveTo(x, y);
+        cap.moveTo(x, y);
+      } else {
+        surface.lineTo(x, y);
+        fill.lineTo(x, y);
+        cap.lineTo(x, y);
+      }
+    }
+    fill
+      ..lineTo(200, bottom + 1)
+      ..lineTo(20, bottom + 1)
+      ..close();
+    for (var i = 60; i >= 0; i--) {
+      final x = 20 + i * 3.0;
+      final u = (x - _center) / 80;
+      cap.lineTo(x, centerY + curvature * u * u + 5);
+    }
+    cap.close();
+    return _SandShape(
+      fill: fill,
+      surface: surface,
+      cap: cap,
+      bounds: Rect.fromLTRB(20, top, 200, bottom),
+      centerY: centerY,
+    );
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 220, size.height / 320);
-    final glass = _vessel();
+    final glass = _outerGlass;
     const bodyBounds = Rect.fromLTWH(21, 29, 178, 258);
     const contact = Rect.fromLTWH(27, 296, 166, 12);
     _glow(canvas, contact, _shadow.withValues(alpha: 0.16));
@@ -219,30 +295,16 @@ class _GlassHourglassPainter extends CustomPainter {
         ).createShader(bodyBounds),
     );
 
-    final level = _levelForVolume(1 - progress);
-    final upperSurface = _neck - (_neck - _top) * level;
-    final lowerSurface = _neck + (_bottom - _neck) * level;
-    final surfaceRadius = _radiusAt(level);
     canvas.save();
-    canvas.clipPath(_vessel(inset: 2));
+    canvas.clipPath(_innerGlass);
     if (progress < 1) {
-      _sand(
-        canvas,
-        Rect.fromLTRB(20, upperSurface, 200, _neck),
-        surfaceRadius,
-        17,
-      );
+      _sand(canvas, _upperSand, 17);
     }
     if (progress > 0) {
-      _sand(
-        canvas,
-        Rect.fromLTRB(20, lowerSurface, 200, _bottom + 1),
-        surfaceRadius,
-        71,
-      );
+      _sand(canvas, _lowerSand, 71);
     }
     if (progress > 0 && progress < 1) {
-      final stream = Rect.fromLTRB(108.6, _neck, 111.4, lowerSurface);
+      final stream = Rect.fromLTRB(108.6, _neck, 111.4, _lowerSand.centerY);
       canvas.drawRect(
         stream,
         Paint()
@@ -260,7 +322,7 @@ class _GlassHourglassPainter extends CustomPainter {
         canvas.drawCircle(
           Offset(
             _center + math.sin(i * 2.4) * 1.5,
-            _neck + (lowerSurface - _neck) * travel,
+            _neck + (_lowerSand.centerY - _neck) * travel,
           ),
           i.isEven ? 0.85 : 0.5,
           Paint()..color = _white.withValues(alpha: 0.9),
@@ -269,13 +331,35 @@ class _GlassHourglassPainter extends CustomPainter {
     }
     canvas.restore();
 
+    // The wall is a filled thickness band, with a cool outer reflection and
+    // a warm inner reflection; the center remains transparent to the scene.
+    canvas.drawPath(
+      _glassWall,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            _edge.withValues(alpha: 0.78),
+            _white.withValues(alpha: 0.92),
+            _warm.withValues(alpha: 0.50),
+            _shadow.withValues(alpha: 0.48),
+          ],
+          stops: const [0, 0.21, 0.68, 1],
+        ).createShader(bodyBounds),
+    );
+    canvas.save();
+    canvas.clipPath(_innerGlass);
+    for (final upper in [true, false]) {
+      _curvedReflection(canvas, upper, -1);
+      _curvedReflection(canvas, upper, 1);
+    }
+    canvas.restore();
     // Two distinct rims of the glass wall remain readable on a bright sky.
     canvas.drawPath(
       glass,
       Paint()
-        ..color = _shadow.withValues(alpha: 0.23)
+        ..color = _shadow.withValues(alpha: 0.38)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.4,
+        ..strokeWidth = 2.0,
     );
     canvas.drawPath(
       glass,
@@ -323,62 +407,110 @@ class _GlassHourglassPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _sand(Canvas canvas, Rect bounds, double surfaceRadius, int seed) {
+  void _sand(Canvas canvas, _SandShape shape, int seed) {
     canvas.save();
-    canvas.clipRect(bounds);
+    canvas.clipRect(shape.bounds);
+    canvas.clipPath(shape.fill);
     canvas.drawRect(
-      bounds,
+      shape.bounds,
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
+            Color(0xFFFFFEF7),
             Color(0xFFFFFFFF),
-            Color(0xFFF8F5EC),
-            Color(0xFFD3E0E8),
-            Color(0xFFF7FBFC),
+            Color(0xFFCADBE6),
+            Color(0xFFF5F5E9),
           ],
-          stops: [0, 0.27, 0.73, 1],
-        ).createShader(bounds),
+          stops: [0, 0.24, 0.76, 1],
+        ).createShader(shape.bounds),
     );
-    final glow = Rect.fromCenter(
-      center: Offset(96, bounds.top + 5),
-      width: 148,
-      height: 54,
+    _glow(
+      canvas,
+      Rect.fromCenter(
+        center: Offset(96, shape.centerY + 12),
+        width: 150,
+        height: 68,
+      ),
+      _white.withValues(alpha: 0.92),
     );
-    _glow(canvas, glow, _white.withValues(alpha: 0.8));
-    // Static seeded micro-grains keep screenshots and reduced-motion views
-    // textured. They are decorative; no grain contributes to time accounting.
-    for (var i = 0; i < 145; i++) {
+    for (var i = 0; i < 165; i++) {
       final x = 20 + ((i * 73 + seed * 19) % 211) / 211 * 180;
-      final y = bounds.top + ((i * 97 + seed * 23) % 223) / 223 * bounds.height;
+      final y =
+          shape.bounds.top +
+          ((i * 97 + seed * 23) % 223) / 223 * shape.bounds.height;
       canvas.drawCircle(
         Offset(x, y),
-        i % 4 == 0 ? 0.65 : 0.38,
+        i % 5 == 0 ? 0.72 : 0.37,
         Paint()
           ..color = i.isEven
-              ? _white.withValues(alpha: 0.68)
-              : _shadow.withValues(alpha: 0.19),
+              ? _white.withValues(alpha: 0.88)
+              : _shadow.withValues(alpha: 0.22),
       );
+      if (i % 23 == 0) {
+        canvas.drawLine(
+          Offset(x - 1.5, y),
+          Offset(x + 1.5, y),
+          Paint()
+            ..color = _white.withValues(alpha: 0.65)
+            ..strokeWidth = 0.45,
+        );
+      }
     }
-    canvas.restore();
-    final surface = Rect.fromCenter(
-      center: Offset(_center, bounds.top),
-      width: math.max(0.0, surfaceRadius * 2 - 5),
-      height: 7,
-    );
-    canvas.drawOval(
-      surface,
+    canvas.drawPath(
+      shape.cap,
       Paint()
         ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
           colors: [
-            _warm.withValues(alpha: 0.95),
-            _white,
-            const Color(0xFFDCE6E9),
+            _warm.withValues(alpha: 0.9),
+            _white.withValues(alpha: 0.95),
+            _edge.withValues(alpha: 0.35),
           ],
-        ).createShader(surface),
+          stops: const [0, 0.5, 1],
+        ).createShader(shape.bounds),
+    );
+    canvas.drawPath(
+      shape.surface,
+      Paint()
+        ..color = _white.withValues(alpha: 0.94)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+    canvas.restore();
+  }
+
+  void _curvedReflection(Canvas canvas, bool upper, double side) {
+    const height = _neck - _top;
+    final direction = upper ? -1.0 : 1.0;
+    final ribbon = Path();
+    for (var edge = 0; edge < 2; edge++) {
+      for (var i = 0; i <= 24; i++) {
+        final t = edge == 0 ? 0.3 + i / 24 * 0.65 : 0.95 - i / 24 * 0.65;
+        final offset = edge == 0 ? 5.0 : 16.0;
+        final x = _center + side * (_radiusAt(t) - offset);
+        final y = _neck + direction * height * t;
+        if (edge == 0 && i == 0) {
+          ribbon.moveTo(x, y);
+        } else {
+          ribbon.lineTo(x, y);
+        }
+      }
+    }
+    ribbon.close();
+    canvas.drawPath(
+      ribbon,
+      Paint()
+        ..shader = LinearGradient(
+          begin: side < 0 ? Alignment.centerLeft : Alignment.centerRight,
+          end: side < 0 ? Alignment.centerRight : Alignment.centerLeft,
+          colors: [
+            (side < 0 ? _white : _edge).withValues(alpha: 0.48),
+            _warm.withValues(alpha: 0.16),
+            _white.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.25, 1],
+        ).createShader(ribbon.getBounds()),
     );
   }
 
@@ -422,12 +554,12 @@ class _GlassHourglassPainter extends CustomPainter {
     final bounds = Rect.fromCenter(
       center: Offset(_center, y),
       width: (_radius + 5) * 2,
-      height: 16,
+      height: 19,
     );
     canvas.drawOval(
-      bounds.translate(0, 3),
+      bounds.translate(0, 4),
       Paint()
-        ..color = _edge.withValues(alpha: 0.58)
+        ..color = _edge.withValues(alpha: 0.72)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.2,
     );
@@ -463,4 +595,20 @@ class _GlassHourglassPainter extends CustomPainter {
   @override
   bool shouldRepaint(_GlassHourglassPainter oldDelegate) =>
       oldDelegate.progress != progress || oldDelegate.motion != motion;
+}
+
+class _SandShape {
+  const _SandShape({
+    required this.fill,
+    required this.surface,
+    required this.cap,
+    required this.bounds,
+    required this.centerY,
+  });
+
+  final Path fill;
+  final Path surface;
+  final Path cap;
+  final Rect bounds;
+  final double centerY;
 }
