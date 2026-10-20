@@ -80,7 +80,7 @@ void main() {
   });
 
   test('support directory failure propagates without creating a fallback', () async {
-    final failure = FileSystemException('permission denied');
+    const failure = FileSystemException('permission denied');
     await expectLater(
       resolveDatabasePath(
         isAndroid: true,

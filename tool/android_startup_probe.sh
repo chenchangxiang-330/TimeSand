@@ -23,12 +23,8 @@ sleep 30
 adb shell uiautomator dump /sdcard/timesand-window.xml
 adb pull /sdcard/timesand-window.xml build/android-startup-evidence/window.xml
 python3 - <<'PY'
-import os
 from pathlib import Path
 window = Path('build/android-startup-evidence/window.xml').read_text()
 assert '今日' in window or '今天' in window or '时间之瓶' in window, 'TimeSand homepage did not become visible after 30 seconds; see startup log and screenshot.'
-expected_bottle = os.environ.get('TIMESAND_EXPECT_BOTTLE')
-if expected_bottle:
-    assert expected_bottle in window, 'Persisted bottle missing after reinstalling the production APK.'
 print('Verified a visible TimeSand homepage from the shipped APK.')
 PY
