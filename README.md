@@ -176,7 +176,7 @@ Pull Request 工作流在 Ubuntu 和 macOS standard runner 上执行：
 模拟器测试可以使用以下命令运行（需要已启动的 Android 模拟器）：
 
 ~~~sh
-flutter drive -d emulator-5554 --driver=test_driver/integration_test.dart --target=integration_test/app_startup_test.dart
+flutter drive --keep-app-running -d emulator-5554 --driver=test_driver/integration_test.dart --target=integration_test/app_startup_test.dart
 ~~~
 
 启动日志、模拟器截图和集成测试结果保存在 timesand-android-runtime Artifact 中；模拟器验证仍不能替代用户手机验收。

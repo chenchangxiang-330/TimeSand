@@ -13,7 +13,9 @@ bash tool/android_startup_probe.sh build/startup-apk/app-debug.apk
 mkdir -p build/android-startup-evidence/production-initial
 cp build/android-startup-evidence/{logcat.txt,startup.png,window.xml} build/android-startup-evidence/production-initial/
 # Keep the shipped APK separate: flutter drive builds a test-entry APK.
-timeout 12m flutter drive -d emulator-5554 --driver=test_driver/integration_test.dart --target=integration_test/app_startup_test.dart 2>&1 | tee build/android-startup-evidence/integration-test.txt
+# Retain that installation: the default flutter drive teardown uninstalls it
+# and deletes its app-private data before the production cold-start check.
+timeout 12m flutter drive --keep-app-running -d emulator-5554 --driver=test_driver/integration_test.dart --target=integration_test/app_startup_test.dart 2>&1 | tee build/android-startup-evidence/integration-test.txt
 adb logcat -d -v threadtime > build/android-startup-evidence/integration-logcat.txt
 # Restore the production APK using the same runner's debug signing key.
 adb shell am force-stop com.timesand.timesand
