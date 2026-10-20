@@ -14,11 +14,13 @@ class BottleDetailPage extends StatefulWidget {
   const BottleDetailPage({
     required this.repository,
     required this.bottle,
+    this.clock,
     super.key,
   });
 
   final TimeRecordsRepository repository;
   final Bottle bottle;
+  final DateTime Function()? clock;
 
   @override
   State<BottleDetailPage> createState() => _BottleDetailPageState();
@@ -26,15 +28,18 @@ class BottleDetailPage extends StatefulWidget {
 
 class _BottleDetailPageState extends State<BottleDetailPage>
     with WidgetsBindingObserver {
-  DateTime _now = DateTime.now();
+  late DateTime _now;
   Timer? _ticker;
   List<TimeEntry> _entries = const [];
   bool _loading = true;
   String? _error;
 
+  DateTime _readClock() => (widget.clock ?? DateTime.now)().toLocal();
+
   @override
   void initState() {
     super.initState();
+    _now = _readClock();
     WidgetsBinding.instance.addObserver(this);
     _startTicker();
     _load();
@@ -43,10 +48,13 @@ class _BottleDetailPageState extends State<BottleDetailPage>
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted &&
-          ModalRoute.of(context)?.isCurrent == true &&
-          _entries.any((entry) => entry.isActive)) {
-        setState(() => _now = DateTime.now());
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      final now = _readClock();
+      final dateChanged = now.year != _now.year ||
+          now.month != _now.month ||
+          now.day != _now.day;
+      if (dateChanged || _entries.any((entry) => entry.isActive)) {
+        setState(() => _now = now);
       }
     });
   }
@@ -75,7 +83,7 @@ class _BottleDetailPageState extends State<BottleDetailPage>
       if (!mounted) return;
       setState(() {
         _entries = entries;
-        _now = DateTime.now();
+        _now = _readClock();
         _loading = false;
         _error = null;
       });

@@ -127,6 +127,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _navigate(int tab, {bool calendar = false}) {
     setState(() {
+      _now = _readClock();
       _tab = tab;
       if (tab == 1) {
         _historyDate = calendar ? _now : null;
