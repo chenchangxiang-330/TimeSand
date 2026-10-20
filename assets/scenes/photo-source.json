@@ -1,0 +1,17 @@
+{
+  "asset": "coastal-sunrise.jpg",
+  "title": "Sunrise Over the Ocean",
+  "author": "Hommie09",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Sunrise_Over_the_Ocean.jpg",
+  "original_url": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Sunrise_Over_the_Ocean.jpg",
+  "license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "original_sha256": "c5dffbd473dc4f523dfeeaecc365a43dc0dc4429eb6a4d3feabe2ee7506b7c46",
+  "processing": "Primary MPO frame; EXIF orientation; 1920px resize; lifted shadows; reduced saturation; cool-white balance; subtle sky/warm-horizon/blue-water tint; metadata stripped.",
+  "asset_sha256": "f0d47a4859794933e214c16e5e7ef6912f8fa3c39bb11ab240ac837ae8e3c4ec",
+  "size": [
+    1920,
+    1440
+  ],
+  "pillow_version": "11.3.0"
+}
