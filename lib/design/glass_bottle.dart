@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// A decorative glass bottle. A zero fill intentionally leaves the bottle empty.
@@ -61,7 +63,7 @@ class GlassBottle extends StatelessWidget {
 }
 
 class _GlassBottlePainter extends CustomPainter {
-  const _GlassBottlePainter({required this.color, required this.fill});
+  _GlassBottlePainter({required this.color, required this.fill});
 
   final Color color;
   final double fill;
@@ -69,22 +71,114 @@ class _GlassBottlePainter extends CustomPainter {
   static const _white = Color(0xFFFFFFFF);
   static const _warm = Color(0xFFFFF0D7);
 
+  late final Path _outerGlass = _vessel(0);
+  late final Path _innerGlass = _vessel(2.5);
+  late final Path _glassWall = Path.combine(
+    PathOperation.difference,
+    _outerGlass,
+    _innerGlass,
+  );
+  late final _BottleSand _sandShape = _createSandShape();
+
+  Path _vessel(double inset) => Path()
+    ..moveTo(34 + inset, 15)
+    ..lineTo(64 - inset, 15)
+    ..lineTo(64 - inset, 32)
+    ..cubicTo(64 - inset, 40, 83 - inset, 41, 85 - inset, 58)
+    ..cubicTo(87 - inset, 73, 86 - inset, 99, 84 - inset, 117)
+    ..cubicTo(83 - inset, 128 - inset, 76, 132 - inset, 66, 132 - inset)
+    ..lineTo(32, 132 - inset)
+    ..cubicTo(22, 132 - inset, 15 + inset, 128 - inset, 14 + inset, 117)
+    ..cubicTo(12 + inset, 99, 11 + inset, 73, 13 + inset, 58)
+    ..cubicTo(15 + inset, 41, 34 + inset, 40, 34 + inset, 32)
+    ..close();
+
+  _BottleSand _createSandShape() {
+    const top = 48.0;
+    const bottom = 129.5;
+    const slices = 128;
+    const step = (bottom - top) / slices;
+    final curvature = 6.0 * math.sin(math.pi * fill);
+    // Sample the real clipped interior, including its shoulder and rounded foot.
+    // This work runs once per painter, not on animation frames.
+    final widths = List<double>.generate(slices, (i) {
+      final y = top + (i + 0.5) * step;
+      var low = 0.0;
+      var high = 40.0;
+      for (var j = 0; j < 15; j++) {
+        final x = (low + high) / 2;
+        if (_innerGlass.contains(Offset(49 + x, y))) {
+          low = x;
+        } else {
+          high = x;
+        }
+      }
+      return (low + high) / 2;
+    });
+    final total = widths.fold<double>(0, (sum, radius) => sum + radius * 2);
+    double areaBelow(double centerY) {
+      var area = 0.0;
+      for (var i = 0; i < slices; i++) {
+        final y = top + (i + 0.5) * step;
+        if (y < centerY) continue;
+        final radius = curvature < 0.0001
+            ? widths[i]
+            : math.min(widths[i], 36 * math.sqrt((y - centerY) / curvature));
+        area += radius * 2;
+      }
+      return area;
+    }
+
+    var low = top - curvature;
+    var high = bottom;
+    for (var i = 0; i < 24; i++) {
+      final middle = (low + high) / 2;
+      if (areaBelow(middle) > total * fill) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    final centerY = fill >= 1 ? top : (low + high) / 2;
+    final body = Path();
+    final surface = Path();
+    final cap = Path();
+    for (var i = 0; i <= 39; i++) {
+      final x = 10 + i * 2.0;
+      final u = (x - 49) / 36;
+      final y = centerY + curvature * u * u;
+      if (i == 0) {
+        body.moveTo(x, y);
+        surface.moveTo(x, y);
+        cap.moveTo(x, y);
+      } else {
+        body.lineTo(x, y);
+        surface.lineTo(x, y);
+        cap.lineTo(x, y);
+      }
+    }
+    body
+      ..lineTo(88, bottom)
+      ..lineTo(10, bottom)
+      ..close();
+    for (var i = 39; i >= 0; i--) {
+      final x = 10 + i * 2.0;
+      final u = (x - 49) / 36;
+      cap.lineTo(x, centerY + curvature * u * u + 3.5);
+    }
+    return _BottleSand(
+      fill: body,
+      surface: surface,
+      cap: cap..close(),
+      centerY: centerY,
+    );
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 98, size.height / 140);
-    final glass = Path()
-      ..moveTo(34, 15)
-      ..lineTo(64, 15)
-      ..lineTo(64, 32)
-      ..cubicTo(64, 40, 83, 41, 85, 58)
-      ..cubicTo(87, 73, 86, 99, 84, 117)
-      ..cubicTo(83, 128, 76, 132, 66, 132)
-      ..lineTo(32, 132)
-      ..cubicTo(22, 132, 15, 128, 14, 117)
-      ..cubicTo(12, 99, 11, 73, 13, 58)
-      ..cubicTo(15, 41, 34, 40, 34, 32)
-      ..close();
+    final glass = _outerGlass;
     const bounds = Rect.fromLTWH(11, 15, 76, 117);
     final tint = Color.lerp(color, _white, 0.42)!;
     final edge = Color.lerp(color, const Color(0xFF5C86A3), 0.5)!;
@@ -109,71 +203,31 @@ class _GlassBottlePainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.clipPath(glass);
-    if (fill > 0) {
-      final surface = 129 - 81 * fill;
-      final sandBounds = Rect.fromLTRB(11, surface, 87, 133);
-      canvas.drawRect(
-        sandBounds,
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color.lerp(color, _white, 0.60)!,
-              Color.lerp(color, _white, 0.12)!,
-              Color.lerp(color, const Color(0xFF334E68), 0.22)!,
-              Color.lerp(color, _white, 0.24)!,
-            ],
-            stops: const [0, 0.3, 0.76, 1],
-          ).createShader(sandBounds),
-      );
-      final glow = Rect.fromCenter(
-        center: Offset(37, surface + 6),
-        width: 65,
-        height: 28,
-      );
-      _glow(canvas, glow, _white.withValues(alpha: 0.35));
-      for (var i = 0; i < 65; i++) {
-        canvas.drawCircle(
-          Offset(
-            14 + ((i * 47 + 13) % 101) / 101 * 70,
-            surface + ((i * 71 + 31) % 103) / 103 * (132 - surface),
-          ),
-          i.isEven ? 0.42 : 0.27,
-          Paint()
-            ..color = i.isEven
-                ? _white.withValues(alpha: 0.5)
-                : edge.withValues(alpha: 0.25),
-        );
-      }
-      final surfaceBounds = Rect.fromCenter(
-        center: Offset(49, surface),
-        width: 72,
-        height: 8,
-      );
-      canvas.drawOval(
-        surfaceBounds,
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.lerp(color, _warm, 0.72)!,
-              Color.lerp(color, _white, 0.5)!,
-              color,
-            ],
-          ).createShader(surfaceBounds),
-      );
-    }
+    canvas.clipPath(_innerGlass);
+    if (fill > 0) _paintSand(canvas, edge);
+    _faceReflection(canvas);
     canvas.restore();
+
+    canvas.drawPath(
+      _glassWall,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            edge.withValues(alpha: 0.72),
+            _white.withValues(alpha: 0.92),
+            _warm.withValues(alpha: 0.65),
+            edge.withValues(alpha: 0.58),
+          ],
+          stops: const [0, 0.18, 0.65, 1],
+        ).createShader(bounds),
+    );
 
     canvas.drawPath(
       glass,
       Paint()
-        ..color = edge.withValues(alpha: 0.30)
+        ..color = edge.withValues(alpha: 0.38)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.8,
+        ..strokeWidth = 1.7,
     );
     canvas.drawPath(
       glass,
@@ -227,7 +281,7 @@ class _GlassBottlePainter extends CustomPainter {
 
     const mouth = Rect.fromLTWH(29, 9, 40, 12);
     canvas.drawOval(
-      mouth.translate(0, 2.5),
+      mouth.translate(0, 3.5),
       Paint()
         ..color = edge.withValues(alpha: 0.6)
         ..style = PaintingStyle.stroke
@@ -267,6 +321,113 @@ class _GlassBottlePainter extends CustomPainter {
     canvas.restore();
   }
 
+  void _paintSand(Canvas canvas, Color edge) {
+    final shape = _sandShape;
+    const bounds = Rect.fromLTRB(10, 48, 88, 129.5);
+    canvas.save();
+    canvas.clipRect(bounds);
+    canvas.clipPath(shape.fill);
+    canvas.drawRect(
+      bounds,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(color, _white, 0.70)!,
+            Color.lerp(color, _white, 0.13)!,
+            Color.lerp(color, const Color(0xFF334E68), 0.3)!,
+            Color.lerp(color, _warm, 0.3)!,
+          ],
+          stops: const [0, 0.28, 0.78, 1],
+        ).createShader(bounds),
+    );
+    _glow(
+      canvas,
+      Rect.fromCenter(
+        center: Offset(39, shape.centerY + 5),
+        width: 64,
+        height: 32,
+      ),
+      _white.withValues(alpha: 0.52),
+    );
+    for (var i = 0; i < 90; i++) {
+      canvas.drawCircle(
+        Offset(
+          14 + ((i * 47 + 13) % 101) / 101 * 70,
+          48 + ((i * 71 + 31) % 103) / 103 * 81.5,
+        ),
+        i.isEven ? 0.46 : 0.28,
+        Paint()
+          ..color = i.isEven
+              ? _white.withValues(alpha: 0.7)
+              : edge.withValues(alpha: 0.26),
+      );
+    }
+    canvas.drawPath(
+      shape.cap,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            Color.lerp(color, _warm, 0.77)!,
+            Color.lerp(color, _white, 0.72)!,
+            Color.lerp(color, _white, 0.15)!,
+          ],
+        ).createShader(bounds),
+    );
+    canvas.drawPath(
+      shape.surface,
+      Paint()
+        ..color = _white.withValues(alpha: 0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.65,
+    );
+    canvas.restore();
+  }
+
+  void _faceReflection(Canvas canvas) {
+    final reflection = Path()
+      ..moveTo(38, 22)
+      ..lineTo(38, 33)
+      ..cubicTo(36, 44, 21, 44, 20, 60)
+      ..cubicTo(18, 79, 20, 105, 23, 118)
+      ..quadraticBezierTo(26, 122, 30, 116)
+      ..cubicTo(26, 96, 26, 76, 28, 61)
+      ..cubicTo(29, 48, 44, 43, 43, 33)
+      ..lineTo(43, 22)
+      ..close();
+    canvas.drawPath(
+      reflection,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            _white.withValues(alpha: 0.6),
+            _warm.withValues(alpha: 0.24),
+            _white.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.38, 1],
+        ).createShader(reflection.getBounds()),
+    );
+    final rearReflection = Path()
+      ..moveTo(75, 56)
+      ..cubicTo(80, 75, 79, 103, 75, 120)
+      ..lineTo(70, 121)
+      ..cubicTo(73, 102, 75, 75, 70, 58)
+      ..close();
+    canvas.drawPath(
+      rearReflection,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            color.withValues(alpha: 0),
+            _white.withValues(alpha: 0.32),
+            color.withValues(alpha: 0.18),
+          ],
+          stops: const [0, 0.65, 1],
+        ).createShader(rearReflection.getBounds()),
+    );
+  }
+
   // Scale a circular shader with its canvas so wide reflections remain
   // elliptical instead of collapsing to a dot on the shortest dimension.
   void _glow(Canvas canvas, Rect bounds, Color color) {
@@ -287,4 +448,18 @@ class _GlassBottlePainter extends CustomPainter {
   @override
   bool shouldRepaint(_GlassBottlePainter oldDelegate) =>
       oldDelegate.color != color || oldDelegate.fill != fill;
+}
+
+class _BottleSand {
+  const _BottleSand({
+    required this.fill,
+    required this.surface,
+    required this.cap,
+    required this.centerY,
+  });
+
+  final Path fill;
+  final Path surface;
+  final Path cap;
+  final double centerY;
 }
