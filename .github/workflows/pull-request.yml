@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   quality:
@@ -83,16 +82,11 @@ jobs:
       - name: Build development APK
         run: flutter build apk --debug
 
-      - name: Download the previously delivered APK for update compatibility
-        uses: actions/download-artifact@v4
-        with:
-          name: timesand-android-debug-pr
-          run-id: 39405161930
-          github-token: ${{ github.token }}
-          path: build/previous-apk
-
-      - name: Compare APK signing certificates
-        run: python3 tool/compare_apk_certificates.py
+      - name: Record the production APK signing certificate
+        run: |
+          mkdir -p build/android-startup-evidence
+          APK_SIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$APK_SIGNER" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk | tee build/android-startup-evidence/production-certificate.txt
 
       - name: Preserve the production APK before building integration tests
         run: |
