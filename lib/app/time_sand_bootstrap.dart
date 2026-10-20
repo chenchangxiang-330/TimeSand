@@ -54,8 +54,7 @@ class _TimeSandBootstrapState extends State<TimeSandBootstrap> {
     _opening = true;
     setState(() => _loading = true);
     try {
-      final database =
-          await (widget.databaseLoader ?? _openLocalDatabase)();
+      final database = await (widget.databaseLoader ?? _openLocalDatabase)();
       if (!mounted) {
         // Only a result that was never handed to the app is owned here.
         await database.close();
@@ -119,10 +118,7 @@ class _TimeSandBootstrapState extends State<TimeSandBootstrap> {
                         semanticsLabel: '正在打开本地数据',
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        '正在打开你的时间之瓶…',
-                        textAlign: TextAlign.center,
-                      ),
+                      const Text('正在打开你的时间之瓶…', textAlign: TextAlign.center),
                     ] else ...[
                       const Text(
                         '暂时无法打开本地数据',
@@ -133,10 +129,7 @@ class _TimeSandBootstrapState extends State<TimeSandBootstrap> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        '请重试。现有数据不会被清除。',
-                        textAlign: TextAlign.center,
-                      ),
+                      const Text('请重试。现有数据不会被清除。', textAlign: TextAlign.center),
                       const SizedBox(height: 24),
                       FilledButton.icon(
                         key: const ValueKey('retry-startup'),

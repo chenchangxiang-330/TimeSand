@@ -23,7 +23,9 @@ void main() {
 
       try {
         await _launchProductionApp(tester);
-        database = tester.widget<TimeSandApp>(find.byType(TimeSandApp)).database;
+        database = tester
+            .widget<TimeSandApp>(find.byType(TimeSandApp))
+            .database;
         final databasePath = database.database.path;
         expect(databasePath, isNot(':memory:'));
         expect(databasePath.startsWith('/'), isTrue);
@@ -31,9 +33,9 @@ void main() {
         expect(await File(databasePath).exists(), isTrue);
 
         // Use the real app-private directory, never an injected test database.
-        final probeDirectory = await File(databasePath).parent.createTemp(
-          'timesand-startup-smoke-',
-        );
+        final probeDirectory = await File(
+          databasePath,
+        ).parent.createTemp('timesand-startup-smoke-');
         try {
           final probe = File('${probeDirectory.path}/write-check');
           await probe.writeAsString('writable', flush: true);
@@ -84,7 +86,11 @@ void main() {
           }
           await tester.pump(const Duration(milliseconds: 100));
         }
-        expect(createdBottle, isNotNull, reason: 'The bottle was not persisted.');
+        expect(
+          createdBottle,
+          isNotNull,
+          reason: 'The bottle was not persisted.',
+        );
         final bottle = createdBottle!;
         final bottleId = bottle.id!;
         final startButton = find.byKey(ValueKey('start-$bottleId'));
@@ -133,7 +139,9 @@ void main() {
         database = null;
 
         await _launchProductionApp(tester);
-        database = tester.widget<TimeSandApp>(find.byType(TimeSandApp)).database;
+        database = tester
+            .widget<TimeSandApp>(find.byType(TimeSandApp))
+            .database;
         expect(database.database.path, databasePath);
         final reopenedRepository = TimeRecordsRepository(database);
         expect(

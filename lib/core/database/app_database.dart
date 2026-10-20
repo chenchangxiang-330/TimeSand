@@ -13,11 +13,14 @@ class TimeSandDatabase {
   Database get database => _database;
 
   static Future<TimeSandDatabase> open({String? path}) async {
-    final databasePath = path ?? await resolveDatabasePath(
-      isAndroid: Platform.isAndroid,
-      legacyPath: '${await databaseFactoryFfiNoIsolate.getDatabasesPath()}/timesand.db',
-      supportDirectory: getApplicationSupportDirectory,
-    );
+    final databasePath =
+        path ??
+        await resolveDatabasePath(
+          isAndroid: Platform.isAndroid,
+          legacyPath:
+              '${await databaseFactoryFfiNoIsolate.getDatabasesPath()}/timesand.db',
+          supportDirectory: getApplicationSupportDirectory,
+        );
     final database = await databaseFactoryFfiNoIsolate.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(

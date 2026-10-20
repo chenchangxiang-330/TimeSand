@@ -90,7 +90,9 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('late failure after disposal never updates the UI', (tester) async {
+  testWidgets('late failure after disposal never updates the UI', (
+    tester,
+  ) async {
     final pending = Completer<TimeSandDatabase>();
     await tester.pumpWidget(
       TimeSandBootstrap(databaseLoader: () => pending.future),
