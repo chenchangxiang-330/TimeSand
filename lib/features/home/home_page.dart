@@ -283,7 +283,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final glass = RepaintBoundary(
       child: HourglassPlaceholder(
         progress: _snapshot.progress,
-        height: desktop ? 330 : 252,
+        height: desktop ? 314 : 252,
         animate: widget.enableTicker && _foreground && !_routeOpen,
       ),
     );
@@ -402,7 +402,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           spacing: 12,
           runSpacing: 6,
           children: [
-            Text('今日 · 时间之瓶', style: Theme.of(context).textTheme.titleLarge),
+            const Text('今日 · 时间之瓶', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
             TextButton.icon(
               key: const ValueKey('create-bottle-button'),
               onPressed: () => _createBottle(context),
@@ -504,7 +504,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     GlassBottle(
                       color: Color(bottle.color),
                       fill: fill,
-                      height: desktop ? 110 : 100,
+                      height: desktop ? 136 : 116,
                       icon: _bottleIcon(bottle.name),
                     ),
                     const SizedBox(height: 6),
