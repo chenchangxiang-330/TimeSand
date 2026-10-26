@@ -383,6 +383,7 @@ class _SandFlowPainter extends CustomPainter {
   final SandFlowSurfaceState state;
   final _grainPaint = Paint();
   final _glowPaint = Paint();
+  final _depthPaint = Paint()..color = const Color(0x25315D79);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -439,6 +440,7 @@ class _SandFlowPainter extends CustomPainter {
         final radius = .7 + (grain.seed % 5) * .17;
         _glowPaint.color = tint.withValues(alpha: .15);
         canvas.drawCircle(point, radius * 2.6, _glowPaint);
+        canvas.drawCircle(point + const Offset(0, .35), radius * 1.55, _depthPaint);
         _grainPaint.color = tint.withValues(alpha: .94);
         canvas.drawCircle(point, radius, _grainPaint);
       }

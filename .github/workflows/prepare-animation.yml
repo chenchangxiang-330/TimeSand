@@ -39,10 +39,15 @@ jobs:
         env:
           RUN_UI_SCREENSHOTS: 'true'
         run: flutter test test/visual --concurrency=1 --reporter expanded
+      - name: Generate small previews of actual desktop frames
+        run: |
+          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+          python3 tool/render_sand_flow_previews.py
       - name: Preserve actual sequence in repository
         run: |
           mkdir -p docs/animation
           cp build/ui-screenshots/sand-flow-*.png docs/animation/
+          cp build/ui-screenshots/sand-flow-*.jpg docs/animation/
           git add docs/animation
           if ! git diff --cached --quiet; then
             git config user.name "TimeSand cloud validation"
