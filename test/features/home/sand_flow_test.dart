@@ -517,7 +517,8 @@ void _expectAnchors(WidgetTester tester, int bottleId) {
     expect(
       geometry.obstacles.any((rect) => rect.contains(point)),
       isFalse,
-      reason: 'The continuous stream must route outside text, not be clipped by it.',
+      reason:
+          'The continuous stream must route outside text, not be clipped by it.',
     );
   }
 }

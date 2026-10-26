@@ -27,8 +27,14 @@ class SandFlowGeometry {
     // The final control point shares the mouth's x, making entry vertical.
     final headingBottom = obstacles
         .where((rect) => rect.top > source.dy && rect.bottom < mouth.dy)
-        .fold<double>(source.dy + 8, (bottom, rect) => math.max(bottom, rect.bottom + 4));
-    final approachY = math.min(mouth.dy - 4, math.max(mouth.dy - 16, headingBottom));
+        .fold<double>(
+          source.dy + 8,
+          (bottom, rect) => math.max(bottom, rect.bottom + 4),
+        );
+    final approachY = math.min(
+      mouth.dy - 4,
+      math.max(mouth.dy - 16, headingBottom),
+    );
     path = Path()
       ..moveTo(source.dx, source.dy)
       ..cubicTo(source.dx, source.dy + 4, lane, source.dy, lane, source.dy + 8)
@@ -457,7 +463,11 @@ class _SandFlowPainter extends CustomPainter {
       double alpha;
       if (p < .92) {
         final fall = (p - .74) / .18;
-        x = 49 + math.sin(grain.seed * 2.1 + fall * 5) * .75 * math.sin(math.pi * fall);
+        x =
+            49 +
+            math.sin(grain.seed * 2.1 + fall * 5) *
+                .75 *
+                math.sin(math.pi * fall);
         y = 15 + (geometry.bottle.surfaceY - 15) * fall;
         alpha = .9;
       } else {
