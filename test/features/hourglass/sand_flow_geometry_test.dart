@@ -46,8 +46,9 @@ void main() {
             lessThan(.05),
           );
           expect((route.position(1) - route.mouth).distance, lessThan(.05));
-          final endDirection =
-              route.metric.getTangentForOffset(route.metric.length)!.vector;
+          final endDirection = route.metric
+              .getTangentForOffset(route.metric.length)!
+              .vector;
           expect(endDirection.dx.abs(), lessThan(.001));
           expect(endDirection.dy, greaterThan(0));
           // Only the flight route moves; landing and fill remain tied to the
@@ -99,12 +100,7 @@ SandFlowGeometry _geometry(
     bottle: GlassBottleGeometry(.4),
     obstacles: [
       if (!wide)
-        Rect.fromLTRB(
-          13,
-          295.0 + verticalOffset,
-          377,
-          330.0 + verticalOffset,
-        ),
+        Rect.fromLTRB(13, 295.0 + verticalOffset, 377, 330.0 + verticalOffset),
       Rect.fromLTRB(
         27,
         420.0 + verticalOffset,

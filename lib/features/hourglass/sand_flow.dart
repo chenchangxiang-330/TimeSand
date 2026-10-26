@@ -49,9 +49,7 @@ class SandFlowGeometry {
   /// different lengths can cut diagonally through the protected headings.
   SandFlowGeometry retargetFrom(SandFlowGeometry previous, double transition) {
     if (transition >= 1) return this;
-    final t = Curves.easeInOut.transform(
-      transition.clamp(0.0, 1.0).toDouble(),
-    );
+    final t = Curves.easeInOut.transform(transition.clamp(0.0, 1.0).toDouble());
     return SandFlowGeometry(
       source: source,
       mouth: Offset(
