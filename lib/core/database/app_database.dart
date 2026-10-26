@@ -1,4 +1,9 @@
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'database_path.dart';
 
 class TimeSandDatabase {
   TimeSandDatabase._(this._database);
@@ -10,7 +15,12 @@ class TimeSandDatabase {
   static Future<TimeSandDatabase> open({String? path}) async {
     final databasePath =
         path ??
-        '${await databaseFactoryFfiNoIsolate.getDatabasesPath()}/timesand.db';
+        await resolveDatabasePath(
+          isAndroid: Platform.isAndroid,
+          legacyPath:
+              '${await databaseFactoryFfiNoIsolate.getDatabasesPath()}/timesand.db',
+          supportDirectory: getApplicationSupportDirectory,
+        );
     final database = await databaseFactoryFfiNoIsolate.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(
