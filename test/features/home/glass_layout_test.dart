@@ -219,11 +219,15 @@ void main() {
       // The active bottle cannot start again; another bottle exposes the
       // explicit confirmation flow rather than silently creating a timer.
       expect(
-        tester.widget<IconButton>(find.byKey(ValueKey('start-${first.id}'))).onPressed,
+        tester
+            .widget<IconButton>(find.byKey(ValueKey('start-${first.id}')))
+            .onPressed,
         isNotNull,
       );
       expect(
-        tester.widget<IconButton>(find.byKey(ValueKey('start-${second.id}'))).onPressed,
+        tester
+            .widget<IconButton>(find.byKey(ValueKey('start-${second.id}')))
+            .onPressed,
         isNull,
       );
 
