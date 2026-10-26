@@ -56,7 +56,7 @@ void main() {
             home: HomePage(
               repository: repository,
               clock: () => now,
-              enableTicker: false,
+              enableTicker: true,
               enableFlowAnimation: true,
             ),
           ),

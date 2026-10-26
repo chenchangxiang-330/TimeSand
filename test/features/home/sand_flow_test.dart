@@ -47,12 +47,16 @@ void main() {
 
     await _tap(tester, _idKey('start-', bottles.first.id!));
     await _until(tester, () => _flow(tester).debugIsEmitting);
-    await _frames(tester, const Duration(milliseconds: 1200));
+    await _frames(tester, const Duration(seconds: 3));
     final active = (await repository.fetchActiveEntry())!;
     final flow = _flow(tester);
     expect(active.bottleId, bottles.first.id);
     expect(flow.debugTargetBottleId, active.bottleId);
     expect(flow.debugParticleCount, greaterThan(0));
+    expect(
+      flow.debugParticleCount,
+      lessThanOrEqualTo(SandFlowSurfaceState.maxParticles),
+    );
     final emissions = flow.debugEmissionCount;
 
     await _tap(tester, _idKey('select-bottle-', bottles.last.id!));
@@ -243,6 +247,69 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
+
+  testWidgets(
+    'horizontal shelf updates the mouth and pauses an offscreen target',
+    (tester) async {
+      for (var index = 2; index < 8; index++) {
+        await repository.createBottle(
+          name: '额外时间之瓶 $index',
+          color: 0xFF8FA6D7,
+          now: clock.now.add(Duration(seconds: index)),
+        );
+      }
+      final active = await repository.startTimer(
+        bottleId: bottles.last.id!,
+        startedAt: clock.now.subtract(const Duration(minutes: 1)),
+      );
+      await _pumpHome(tester, repository, clock);
+      await _until(tester, () => _flow(tester).debugIsEmitting);
+      await _frames(tester, const Duration(milliseconds: 600));
+      expect(await repository.fetchBottles(), hasLength(8));
+      final flow = _flow(tester);
+      final initial = flow.debugGeometry!;
+      _expectAnchors(tester, bottles.last.id!);
+      final horizontal = find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable &&
+            widget.axisDirection == AxisDirection.right,
+      );
+      expect(horizontal, findsOneWidget);
+      final position = tester.state<ScrollableState>(horizontal).position;
+      expect(position.pixels, 0);
+      expect(position.maxScrollExtent, greaterThan(300));
+
+      position.jumpTo(20);
+      await _frames(tester, const Duration(milliseconds: 100));
+      expect(flow.debugIsEmitting, isTrue);
+      expect(flow.debugGeometry!.mouth.dx, closeTo(initial.mouth.dx - 20, .5));
+      expect(flow.debugGeometry!.mouth.dy, closeTo(initial.mouth.dy, .5));
+      expect((flow.debugGeometry!.source - initial.source).distance, lessThan(.5));
+      _expectAnchors(tester, bottles.last.id!);
+
+      position.jumpTo(position.maxScrollExtent);
+      await _frames(tester, const Duration(milliseconds: 100));
+      expect(flow.debugGeometry, isNull);
+      expect(flow.debugIsEmitting, isFalse);
+      expect(flow.debugMotionRunning, isFalse);
+      final emissions = flow.debugEmissionCount;
+      await _frames(tester, const Duration(seconds: 2));
+      expect(flow.debugEmissionCount, emissions);
+      expect(flow.debugMotionRunning, isFalse);
+      expect((await repository.fetchActiveEntry())!.id, active.id);
+      expect(await repository.fetchEntries(), hasLength(1));
+
+      position.jumpTo(0);
+      await _until(tester, () => flow.debugIsEmitting);
+      await _frames(tester, const Duration(milliseconds: 100));
+      expect(flow.debugEmissionCount, greaterThan(emissions));
+      expect(flow.debugParticleCount, greaterThan(0));
+      expect(flow.debugTargetBottleId, bottles.last.id);
+      _expectAnchors(tester, bottles.last.id!);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets('flow overlay does not intercept taps on the bottle body', (
     tester,
