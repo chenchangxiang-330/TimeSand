@@ -134,7 +134,7 @@ void main() {
     final ids = await _seedBottles(repository, count: 2);
     await repository.startTimer(
       bottleId: ids.first,
-      startedAt: DateTime.now().subtract(const Duration(minutes: 20)),
+      startedAt: _sampleNow.subtract(const Duration(minutes: 20)),
     );
     await _pumpHome(
       tester,
@@ -216,8 +216,16 @@ void main() {
       final active = await repository.fetchActiveEntry();
       expect(active, isNotNull);
       expect(active!.bottleId, second.id);
-      expect(find.byKey(ValueKey('start-${first.id}')), findsNothing);
-      expect(find.byKey(ValueKey('start-${second.id}')), findsNothing);
+      // The active bottle cannot start again; another bottle exposes the
+      // explicit confirmation flow rather than silently creating a timer.
+      expect(
+        tester.widget<IconButton>(find.byKey(ValueKey('start-${first.id}'))).onPressed,
+        isNotNull,
+      );
+      expect(
+        tester.widget<IconButton>(find.byKey(ValueKey('start-${second.id}'))).onPressed,
+        isNull,
+      );
 
       // Changing selection while recording cannot silently replace the timer.
       final selectOther = find.byKey(ValueKey('select-bottle-${first.id}'));
