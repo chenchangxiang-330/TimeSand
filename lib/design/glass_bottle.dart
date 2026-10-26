@@ -1,6 +1,6 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+
+import 'bottle_geometry.dart';
 
 /// A decorative glass bottle. A zero fill intentionally leaves the bottle empty.
 class GlassBottle extends StatelessWidget {
@@ -9,6 +9,7 @@ class GlassBottle extends StatelessWidget {
     this.fill = 0,
     this.height = 120,
     this.icon = Icons.auto_stories_outlined,
+    this.receiving = false,
     super.key,
   }) : assert(height > 0);
 
@@ -16,6 +17,9 @@ class GlassBottle extends StatelessWidget {
   final double fill;
   final double height;
   final IconData icon;
+
+  /// Indicates a real active recording receiving the decorative sand stream.
+  final bool receiving;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +42,7 @@ class GlassBottle extends StatelessWidget {
                     painter: _GlassBottlePainter(
                       color: visibleColor,
                       fill: safeFill,
+                      receiving: receiving,
                     ),
                   ),
                 ),
@@ -63,125 +68,39 @@ class GlassBottle extends StatelessWidget {
 }
 
 class _GlassBottlePainter extends CustomPainter {
-  _GlassBottlePainter({required this.color, required this.fill});
+  _GlassBottlePainter({
+    required this.color,
+    required this.fill,
+    required this.receiving,
+  });
 
   final Color color;
   final double fill;
+  final bool receiving;
 
   static const _white = Color(0xFFFFFFFF);
   static const _warm = Color(0xFFFFF0D7);
 
-  late final Path _outerGlass = _vessel(0);
-  late final Path _innerGlass = _vessel(2.5);
-  late final Path _glassWall = Path.combine(
-    PathOperation.difference,
-    _outerGlass,
-    _innerGlass,
-  );
-  late final _BottleSand _sandShape = _createSandShape();
-
-  Path _vessel(double inset) => Path()
-    ..moveTo(34 + inset, 15)
-    ..lineTo(64 - inset, 15)
-    ..lineTo(64 - inset, 32)
-    ..cubicTo(64 - inset, 40, 83 - inset, 41, 85 - inset, 58)
-    ..cubicTo(87 - inset, 73, 86 - inset, 99, 84 - inset, 117)
-    ..cubicTo(83 - inset, 128 - inset, 76, 132 - inset, 66, 132 - inset)
-    ..lineTo(32, 132 - inset)
-    ..cubicTo(22, 132 - inset, 15 + inset, 128 - inset, 14 + inset, 117)
-    ..cubicTo(12 + inset, 99, 11 + inset, 73, 13 + inset, 58)
-    ..cubicTo(15 + inset, 41, 34 + inset, 40, 34 + inset, 32)
-    ..close();
-
-  _BottleSand _createSandShape() {
-    const top = 48.0;
-    const bottom = 129.5;
-    const slices = 128;
-    const step = (bottom - top) / slices;
-    final curvature = 6.0 * math.sin(math.pi * fill);
-    // Sample the real clipped interior, including its shoulder and rounded foot.
-    // This work runs once per painter, not on animation frames.
-    final widths = List<double>.generate(slices, (i) {
-      final y = top + (i + 0.5) * step;
-      var low = 0.0;
-      var high = 40.0;
-      for (var j = 0; j < 15; j++) {
-        final x = (low + high) / 2;
-        if (_innerGlass.contains(Offset(49 + x, y))) {
-          low = x;
-        } else {
-          high = x;
-        }
-      }
-      return (low + high) / 2;
-    });
-    final total = widths.fold<double>(0, (sum, radius) => sum + radius * 2);
-    double areaBelow(double centerY) {
-      var area = 0.0;
-      for (var i = 0; i < slices; i++) {
-        final y = top + (i + 0.5) * step;
-        if (y < centerY) continue;
-        final radius = curvature < 0.0001
-            ? widths[i]
-            : math.min(widths[i], 36 * math.sqrt((y - centerY) / curvature));
-        area += radius * 2;
-      }
-      return area;
-    }
-
-    var low = top - curvature;
-    var high = bottom;
-    for (var i = 0; i < 24; i++) {
-      final middle = (low + high) / 2;
-      if (areaBelow(middle) > total * fill) {
-        low = middle;
-      } else {
-        high = middle;
-      }
-    }
-    final centerY = fill >= 1 ? top : (low + high) / 2;
-    final body = Path();
-    final surface = Path();
-    final cap = Path();
-    for (var i = 0; i <= 39; i++) {
-      final x = 10 + i * 2.0;
-      final u = (x - 49) / 36;
-      final y = centerY + curvature * u * u;
-      if (i == 0) {
-        body.moveTo(x, y);
-        surface.moveTo(x, y);
-        cap.moveTo(x, y);
-      } else {
-        body.lineTo(x, y);
-        surface.lineTo(x, y);
-        cap.lineTo(x, y);
-      }
-    }
-    body
-      ..lineTo(88, bottom)
-      ..lineTo(10, bottom)
-      ..close();
-    for (var i = 39; i >= 0; i--) {
-      final x = 10 + i * 2.0;
-      final u = (x - 49) / 36;
-      cap.lineTo(x, centerY + curvature * u * u + 3.5);
-    }
-    return _BottleSand(
-      fill: body,
-      surface: surface,
-      cap: cap..close(),
-      centerY: centerY,
-    );
-  }
+  late final GlassBottleGeometry _geometry = GlassBottleGeometry(fill);
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.width / 98, size.height / 140);
-    final glass = _outerGlass;
+    canvas.scale(
+      size.width / GlassBottleGeometry.designSize.width,
+      size.height / GlassBottleGeometry.designSize.height,
+    );
+    final glass = _geometry.exterior;
     const bounds = Rect.fromLTWH(11, 15, 76, 117);
     final tint = Color.lerp(color, _white, 0.42)!;
     final edge = Color.lerp(color, const Color(0xFF5C86A3), 0.5)!;
+    if (receiving) {
+      _glow(
+        canvas,
+        const Rect.fromLTWH(3, 22, 92, 112),
+        color.withValues(alpha: 0.18),
+      );
+    }
     _glow(
       canvas,
       const Rect.fromLTWH(11, 130, 76, 8),
@@ -203,13 +122,13 @@ class _GlassBottlePainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.clipPath(_innerGlass);
+    canvas.clipPath(_geometry.interior);
     if (fill > 0) _paintSand(canvas, edge);
     _faceReflection(canvas);
     canvas.restore();
 
     canvas.drawPath(
-      _glassWall,
+      _geometry.wall,
       Paint()
         ..shader = LinearGradient(
           colors: [
@@ -280,6 +199,17 @@ class _GlassBottlePainter extends CustomPainter {
     );
 
     const mouth = Rect.fromLTWH(29, 9, 40, 12);
+    if (receiving) {
+      _glow(
+        canvas,
+        Rect.fromCenter(
+          center: GlassBottleGeometry.mouth,
+          width: 58,
+          height: 24,
+        ),
+        Color.lerp(color, _white, 0.35)!.withValues(alpha: 0.48),
+      );
+    }
     canvas.drawOval(
       mouth.translate(0, 3.5),
       Paint()
@@ -322,11 +252,11 @@ class _GlassBottlePainter extends CustomPainter {
   }
 
   void _paintSand(Canvas canvas, Color edge) {
-    final shape = _sandShape;
+    final shape = _geometry;
     const bounds = Rect.fromLTRB(10, 48, 88, 129.5);
     canvas.save();
     canvas.clipRect(bounds);
-    canvas.clipPath(shape.fill);
+    canvas.clipPath(shape.sandFill);
     canvas.drawRect(
       bounds,
       Paint()
@@ -345,7 +275,7 @@ class _GlassBottlePainter extends CustomPainter {
     _glow(
       canvas,
       Rect.fromCenter(
-        center: Offset(39, shape.centerY + 5),
+        center: Offset(39, shape.surfaceY + 5),
         width: 64,
         height: 32,
       ),
@@ -365,7 +295,7 @@ class _GlassBottlePainter extends CustomPainter {
       );
     }
     canvas.drawPath(
-      shape.cap,
+      shape.sandCap,
       Paint()
         ..shader = LinearGradient(
           colors: [
@@ -376,7 +306,7 @@ class _GlassBottlePainter extends CustomPainter {
         ).createShader(bounds),
     );
     canvas.drawPath(
-      shape.surface,
+      shape.sandSurface,
       Paint()
         ..color = _white.withValues(alpha: 0.8)
         ..style = PaintingStyle.stroke
@@ -447,19 +377,7 @@ class _GlassBottlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GlassBottlePainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.fill != fill;
-}
-
-class _BottleSand {
-  const _BottleSand({
-    required this.fill,
-    required this.surface,
-    required this.cap,
-    required this.centerY,
-  });
-
-  final Path fill;
-  final Path surface;
-  final Path cap;
-  final double centerY;
+      oldDelegate.color != color ||
+      oldDelegate.fill != fill ||
+      oldDelegate.receiving != receiving;
 }

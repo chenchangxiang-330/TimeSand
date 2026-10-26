@@ -16,6 +16,15 @@ class HourglassPlaceholder extends StatefulWidget {
   final double height;
   final bool animate;
 
+  static const Size designSize = Size(220, 320);
+  static const Offset _designOutlet = Offset(110, 305);
+
+  /// Center of the bottom nozzle in this widget's rendered coordinate system.
+  static Offset outletFor(Size size) => Offset(
+    _designOutlet.dx * size.width / designSize.width,
+    _designOutlet.dy * size.height / designSize.height,
+  );
+
   @override
   State<HourglassPlaceholder> createState() => _HourglassPlaceholderState();
 }
@@ -275,7 +284,10 @@ class _GlassHourglassPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.width / 220, size.height / 320);
+    canvas.scale(
+      size.width / HourglassPlaceholder.designSize.width,
+      size.height / HourglassPlaceholder.designSize.height,
+    );
     final glass = _outerGlass;
     const bodyBounds = Rect.fromLTWH(21, 29, 178, 258);
     const contact = Rect.fromLTWH(27, 296, 166, 12);
@@ -387,7 +399,62 @@ class _GlassHourglassPainter extends CustomPainter {
     _reflection(canvas, false);
     _rim(canvas, _top);
     _rim(canvas, _bottom);
+    _outlet(canvas);
     canvas.restore();
+  }
+
+  // A short glass nozzle joins the bottom rim to the external stream anchor.
+  // It is decorative: neither its shape nor its paint changes recorded time.
+  void _outlet(Canvas canvas) {
+    final tip = HourglassPlaceholder._designOutlet;
+    final nozzle = Path()
+      ..moveTo(_center - 5, _bottom + 4)
+      ..lineTo(_center - 4, tip.dy - 6)
+      ..quadraticBezierTo(_center - 3, tip.dy - 1, tip.dx - 1.6, tip.dy)
+      ..lineTo(tip.dx + 1.6, tip.dy)
+      ..quadraticBezierTo(_center + 3, tip.dy - 1, _center + 4, tip.dy - 6)
+      ..lineTo(_center + 5, _bottom + 4)
+      ..close();
+    canvas.drawPath(
+      nozzle,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            _edge.withValues(alpha: 0.6),
+            _white.withValues(alpha: 0.9),
+            _warm.withValues(alpha: 0.75),
+            _edge.withValues(alpha: 0.65),
+          ],
+          stops: const [0, 0.35, 0.6, 1],
+        ).createShader(nozzle.getBounds()),
+    );
+    canvas.drawPath(
+      nozzle,
+      Paint()
+        ..color = _shadow.withValues(alpha: 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+    canvas.drawLine(
+      Offset(_center - 1.5, _bottom + 7),
+      Offset(tip.dx - 0.6, tip.dy - 1),
+      Paint()
+        ..color = _white.withValues(alpha: 0.9)
+        ..strokeWidth = 0.8
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: tip, width: 4.2, height: 1.7),
+      Paint()..color = _edge.withValues(alpha: 0.8),
+    );
+    canvas.drawLine(
+      Offset(tip.dx - 0.7, tip.dy),
+      Offset(tip.dx + 0.7, tip.dy),
+      Paint()
+        ..color = _white
+        ..strokeWidth = 1.1
+        ..strokeCap = StrokeCap.round,
+    );
   }
 
   // Scale a circular shader with its canvas so wide reflections remain
