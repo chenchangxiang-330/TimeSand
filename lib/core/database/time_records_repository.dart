@@ -173,6 +173,89 @@ class TimeRecordsRepository {
     return updated.firstWhere((entry) => entry.id == active.id);
   }
 
+  /// Switches the confirmed active entry at one shared instant.
+  ///
+  /// A stale confirmation or selecting the same bottle is rejected without
+  /// changing either record. The old timer remains active if any write fails.
+  Future<TimeEntry> switchTimer({
+    required int expectedActiveEntryId,
+    required int bottleId,
+    DateTime? at,
+  }) async {
+    return database.database.transaction<TimeEntry>((transaction) async {
+      final rows = await transaction.query(
+        'time_entries',
+        orderBy: 'started_at ASC',
+      );
+      final entries = rows.map(TimeEntry.fromMap).toList(growable: false);
+      final activeEntries = entries.where((entry) => entry.isActive).toList();
+      if (activeEntries.length != 1 ||
+          activeEntries.single.id != expectedActiveEntryId) {
+        throw StateError('计时状态已变化，请刷新后重试。');
+      }
+      final active = activeEntries.single;
+      final bottles = await transaction.query(
+        'bottles',
+        where: 'id = ?',
+        whereArgs: <Object>[bottleId],
+        limit: 1,
+      );
+      if (bottles.isEmpty || Bottle.fromMap(bottles.single).isArchived) {
+        throw StateError('只能切换到未归档的时间之瓶。');
+      }
+      if (active.bottleId == bottleId) {
+        throw StateError('当前已在此时间之瓶计时。');
+      }
+
+      final boundary = (at ?? DateTime.now()).toUtc();
+      TimeEntryRules.validateInterval(
+        startedAt: active.startedAt,
+        endedAt: boundary,
+        existingEntries: entries,
+        ignoredEntryId: active.id,
+      );
+      TimeEntryRules.validateInterval(
+        startedAt: boundary,
+        endedAt: null,
+        existingEntries: entries,
+        ignoredEntryId: active.id,
+      );
+
+      final timestamp = DateTime.now().toUtc();
+      final changed = await transaction.update(
+        'time_entries',
+        <String, Object?>{
+          'ended_at': boundary.toIso8601String(),
+          'duration_seconds': boundary.difference(active.startedAt).inSeconds,
+          'updated_at': timestamp.toIso8601String(),
+        },
+        where: 'id = ? AND ended_at IS NULL',
+        whereArgs: <Object>[expectedActiveEntryId],
+      );
+      if (changed != 1) {
+        throw StateError('计时状态已变化，请刷新后重试。');
+      }
+
+      final id = await transaction.insert(
+        'time_entries',
+        TimeEntry(
+          bottleId: bottleId,
+          startedAt: boundary,
+          source: TimeEntrySource.active,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        ).toMap(),
+      );
+      final inserted = await transaction.query(
+        'time_entries',
+        where: 'id = ?',
+        whereArgs: <Object>[id],
+        limit: 1,
+      );
+      return TimeEntry.fromMap(inserted.single);
+    });
+  }
+
   Future<TimeEntry> createManualEntry({
     required int bottleId,
     required DateTime startedAt,
