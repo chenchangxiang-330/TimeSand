@@ -12,17 +12,20 @@ import '../bottles/bottle_detail_page.dart';
 import '../bottles/bottle_editor_dialog.dart';
 import '../history/history_page.dart';
 import '../hourglass/hourglass_placeholder.dart';
+import '../hourglass/sand_flow.dart';
 import '../statistics/statistics_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
     required this.repository,
     this.enableTicker = true,
+    this.enableFlowAnimation,
     this.clock,
     super.key,
   });
   final TimeRecordsRepository repository;
   final bool enableTicker;
+  final bool? enableFlowAnimation;
   final DateTime Function()? clock;
   @override
   State<HomePage> createState() => _HomePageState();
@@ -44,6 +47,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _busy = false;
   String? _error;
   final _scroll = ScrollController();
+  final _sourceKey = GlobalKey();
+  final _shelfViewportKey = GlobalKey();
+  final _heroTextKey = GlobalKey();
+  final _shelfHeadingKey = GlobalKey();
+  final _bottleKeys = <int, GlobalKey>{};
+  int _loadGeneration = 0;
   DateTime _readClock() => (widget.clock ?? DateTime.now)().toLocal();
   List<Bottle> get _bottles => _allBottles.where((b) => !b.isArchived).toList();
   TimeEntry? get _activeEntry {
@@ -99,12 +108,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     try {
       final bottles = await widget.repository.fetchBottles(
         includeArchived: true,
       );
       final entries = await widget.repository.fetchEntries();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _allBottles = bottles;
         _entries = entries;
@@ -117,7 +127,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       });
       _startClock();
     } catch (_) {
-      if (mounted)
+      if (mounted && generation == _loadGeneration)
         setState(() {
           _loading = false;
           _error = '暂时无法读取本地记录，请重试。';
@@ -141,6 +151,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
+      final stats = _today;
       final desktop =
           constraints.maxWidth >= 1000 &&
           MediaQuery.textScalerOf(context).scale(1) <= 1.4;
@@ -153,7 +164,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 Expanded(
                   child: Column(
                     children: [
-                      Expanded(child: _content(desktop)),
+                      Expanded(
+                        child: SandFlowSurface(
+                          activeBottleId: _activeEntry?.bottleId,
+                          sourceKey: _sourceKey,
+                          bottleKeys: _bottleKeys,
+                          viewportKey: _shelfViewportKey,
+                          obstacleKeys: [_heroTextKey, _shelfHeadingKey],
+                          colors: {for (final b in _allBottles) b.id!: Color(b.color)},
+                          fills: {
+                            for (final b in _allBottles)
+                              b.id!: stats.recorded.inMicroseconds == 0
+                                  ? 0.0
+                                  : stats.forBottle(b.id!).inMicroseconds /
+                                      stats.recorded.inMicroseconds,
+                          },
+                          enabled: widget.enableFlowAnimation ?? widget.enableTicker,
+                          visible: _tab == 0 && _foreground && !_routeOpen,
+                          child: _content(desktop),
+                        ),
+                      ),
                       if (_activeEntry != null) _activeControl(),
                       Padding(
                         padding: EdgeInsets.fromLTRB(
@@ -282,6 +312,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget _hero(bool desktop) {
     final glass = RepaintBoundary(
       child: HourglassPlaceholder(
+        key: _sourceKey,
         progress: _snapshot.progress,
         height: desktop ? 314 : 252,
         animate: widget.enableTicker && _foreground && !_routeOpen,
@@ -333,6 +364,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       children: [
         const SizedBox(height: 8),
         glass,
+        Column(
+          key: _heroTextKey,
+          children: [
         const Text(
           '时间终将流逝，但你可以决定它流向哪里。',
           textAlign: TextAlign.center,
@@ -352,6 +386,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               '今日剩余 ' + formatClockDuration(_snapshot.remaining),
               style: const TextStyle(fontSize: 11),
             ),
+          ],
+        ),
           ],
         ),
       ],
@@ -396,6 +432,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Column(
+          key: _shelfHeadingKey,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
         Wrap(
           alignment: WrapAlignment.spaceBetween,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -419,6 +459,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           style: TextStyle(fontSize: 12, color: AppTheme.muted),
         ),
         const SizedBox(height: 12),
+          ],
+        ),
         if (_bottles.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -443,6 +485,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         else
           LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
+              key: _shelfViewportKey,
               scrollDirection: Axis.horizontal,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
@@ -505,6 +548,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 child: Column(
                   children: [
                     GlassBottle(
+                      key: _bottleKeys.putIfAbsent(bottle.id!, () => GlobalKey()),
+                      receiving: bottle.id == _activeEntry?.bottleId,
                       color: Color(bottle.color),
                       fill: fill,
                       height: desktop ? 136 : 116,
@@ -543,11 +588,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   color: selected ? AppTheme.blue : AppTheme.muted,
                 ),
               ),
-              if (_activeEntry == null)
-                IconButton(
+              IconButton(
                   key: ValueKey('start-' + bottle.id.toString()),
-                  tooltip: '开始记录 ' + bottle.name,
-                  onPressed: _busy ? null : () => _startTimer(bottle),
+                  tooltip: _activeEntry?.bottleId == bottle.id
+                      ? '正在记录 ' + bottle.name
+                      : _activeEntry == null ? '开始记录 ' + bottle.name : '切换到 ' + bottle.name,
+                  onPressed: _busy || _activeEntry?.bottleId == bottle.id
+                      ? null : () => _startTimer(bottle),
                   icon: const Icon(
                     Icons.play_arrow_rounded,
                     color: AppTheme.blue,
@@ -995,28 +1042,84 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _openRoute(Widget page) async {
-    _routeOpen = true;
+    setState(() => _routeOpen = true);
     _ticker?.cancel();
     await Navigator.push(
       context,
       MaterialPageRoute<void>(builder: (_) => page),
     );
     if (!mounted) return;
-    _routeOpen = false;
+    setState(() => _routeOpen = false);
     await _load();
     _startClock();
   }
 
+  void _acceptCommittedEntry(TimeEntry entry, {TimeEntry? ended}) {
+    if (!mounted) return;
+    // Invalidate any older reads. Animation follows only committed records.
+    _loadGeneration++;
+    setState(() {
+      _entries = [
+        for (final previous in _entries)
+          if (previous.id != entry.id && previous.id != ended?.id) previous,
+        if (ended != null) ended,
+        entry,
+      ];
+      _now = _readClock();
+      _dataRevision++;
+      _selectedId = entry.bottleId;
+    });
+  }
+
   Future<void> _startTimer(Bottle bottle) async {
-    if (_busy) return;
+    if (_busy || _activeEntry?.bottleId == bottle.id) return;
     setState(() => _busy = true);
     try {
-      await widget.repository.startTimer(bottleId: bottle.id!);
+      final current = _activeEntry;
+      if (current != null) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('切换正在投入的时间之瓶？'),
+            content: Text('结束当前计时，并开始记录「${bottle.name}」。已投入的时间会保留。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                key: const ValueKey('confirm-switch-timer'),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('结束并切换'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true || !mounted) return;
+        final boundary = _readClock();
+        final active = await widget.repository.switchTimer(
+          expectedActiveEntryId: current.id!,
+          bottleId: bottle.id!,
+          at: boundary,
+        );
+        final ended = TimeEntry.fromMap({
+          ...current.toMap(),
+          'ended_at': boundary.toUtc().toIso8601String(),
+          'duration_seconds': boundary.difference(current.startedAt).inSeconds,
+          'updated_at': active.updatedAt.toUtc().toIso8601String(),
+        });
+        _acceptCommittedEntry(active, ended: ended);
+      } else {
+        final active = await widget.repository.startTimer(
+          bottleId: bottle.id!,
+          startedAt: _readClock(),
+        );
+        _acceptCommittedEntry(active);
+      }
       await _load();
     } catch (error) {
-      if (mounted) {
-        _showMessage(error.toString());
-      }
+      if (mounted) _showMessage(error.toString());
+      await _load();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -1026,12 +1129,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      await widget.repository.stopTimer();
+      final ended = await widget.repository.stopTimer(endedAt: _readClock());
+      _acceptCommittedEntry(ended);
       await _load();
     } catch (error) {
-      if (mounted) {
-        _showMessage(error.toString());
-      }
+      if (mounted) _showMessage(error.toString());
+      await _load();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -1049,8 +1152,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       if (mounted) {
         _showMessage(error.toString());
       }
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -1075,8 +1176,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       if (mounted) {
         _showMessage(error.toString());
       }
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
   }
 

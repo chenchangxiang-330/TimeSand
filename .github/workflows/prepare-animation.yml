@@ -1,0 +1,58 @@
+name: Prepare and verify sand animation in cloud
+on:
+  push:
+    branches: [feat/hourglass-to-bottle-animation]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - run: flutter pub get
+      - name: Format Dart sources in cloud
+        run: |
+          dart format lib test integration_test test_driver
+          if ! git diff --quiet; then
+            git config user.name "TimeSand cloud validation"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib test integration_test test_driver pubspec.lock
+            git commit -m "style: format sand flow implementation"
+            git push origin HEAD:feat/hourglass-to-bottle-animation
+          fi
+      - name: Analyze
+        run: flutter analyze
+      - name: Unit and widget tests
+        run: flutter test --reporter expanded
+      - name: Install rendering fonts
+        run: sudo apt-get update -qq && sudo apt-get install -y fonts-noto-cjk fonts-roboto
+      - name: Render actual sequence frames
+        env:
+          RUN_UI_SCREENSHOTS: 'true'
+        run: flutter test test/visual --concurrency=1 --reporter expanded
+      - name: Preserve actual sequence in repository
+        run: |
+          mkdir -p docs/animation
+          cp build/ui-screenshots/sand-flow-*.png docs/animation/
+          git add docs/animation
+          if ! git diff --cached --quiet; then
+            git config user.name "TimeSand cloud validation"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "docs: capture actual sand flow sequence"
+            git push origin HEAD:feat/hourglass-to-bottle-animation
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sand-flow-cloud-frames
+          path: build/ui-screenshots
+          if-no-files-found: warn
+          retention-days: 3
