@@ -171,15 +171,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           bottleKeys: _bottleKeys,
                           viewportKey: _shelfViewportKey,
                           obstacleKeys: [_heroTextKey, _shelfHeadingKey],
-                          colors: {for (final b in _allBottles) b.id!: Color(b.color)},
+                          colors: {
+                            for (final b in _allBottles) b.id!: Color(b.color),
+                          },
                           fills: {
                             for (final b in _allBottles)
                               b.id!: stats.recorded.inMicroseconds == 0
                                   ? 0.0
                                   : stats.forBottle(b.id!).inMicroseconds /
-                                      stats.recorded.inMicroseconds,
+                                        stats.recorded.inMicroseconds,
                           },
-                          enabled: widget.enableFlowAnimation ?? widget.enableTicker,
+                          enabled:
+                              widget.enableFlowAnimation ?? widget.enableTicker,
                           visible: _tab == 0 && _foreground && !_routeOpen,
                           child: _content(desktop),
                         ),
@@ -367,27 +370,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         Column(
           key: _heroTextKey,
           children: [
-        const Text(
-          '时间终将流逝，但你可以决定它流向哪里。',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, height: 1.6),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 18,
-          runSpacing: 4,
-          children: [
-            Text(
-              '已流逝 ' + formatClockDuration(_snapshot.elapsed),
-              style: const TextStyle(fontSize: 11),
+            const Text(
+              '时间终将流逝，但你可以决定它流向哪里。',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, height: 1.6),
             ),
-            Text(
-              '今日剩余 ' + formatClockDuration(_snapshot.remaining),
-              style: const TextStyle(fontSize: 11),
+            const SizedBox(height: 10),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 18,
+              runSpacing: 4,
+              children: [
+                Text(
+                  '已流逝 ' + formatClockDuration(_snapshot.elapsed),
+                  style: const TextStyle(fontSize: 11),
+                ),
+                Text(
+                  '今日剩余 ' + formatClockDuration(_snapshot.remaining),
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ],
             ),
-          ],
-        ),
           ],
         ),
       ],
@@ -436,29 +439,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           key: _shelfHeadingKey,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 12,
-          runSpacing: 6,
-          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 6,
+              children: [
+                const Text(
+                  '今日 · 时间之瓶',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('create-bottle-button'),
+                  onPressed: () => _createBottle(context),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('新建'),
+                ),
+              ],
+            ),
             const Text(
-              '今日 · 时间之瓶',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              '点击瓶子，查看累计时光',
+              style: TextStyle(fontSize: 12, color: AppTheme.muted),
             ),
-            TextButton.icon(
-              key: const ValueKey('create-bottle-button'),
-              onPressed: () => _createBottle(context),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('新建'),
-            ),
-          ],
-        ),
-        const Text(
-          '点击瓶子，查看累计时光',
-          style: TextStyle(fontSize: 12, color: AppTheme.muted),
-        ),
-        const SizedBox(height: 12),
+            const SizedBox(height: 12),
           ],
         ),
         if (_bottles.isEmpty)
@@ -548,7 +551,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 child: Column(
                   children: [
                     GlassBottle(
-                      key: _bottleKeys.putIfAbsent(bottle.id!, () => GlobalKey()),
+                      key: _bottleKeys.putIfAbsent(
+                        bottle.id!,
+                        () => GlobalKey(),
+                      ),
                       receiving: bottle.id == _activeEntry?.bottleId,
                       color: Color(bottle.color),
                       fill: fill,
@@ -589,17 +595,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
               IconButton(
-                  key: ValueKey('start-' + bottle.id.toString()),
-                  tooltip: _activeEntry?.bottleId == bottle.id
-                      ? '正在记录 ' + bottle.name
-                      : _activeEntry == null ? '开始记录 ' + bottle.name : '切换到 ' + bottle.name,
-                  onPressed: _busy || _activeEntry?.bottleId == bottle.id
-                      ? null : () => _startTimer(bottle),
-                  icon: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: AppTheme.blue,
-                  ),
+                key: ValueKey('start-' + bottle.id.toString()),
+                tooltip: _activeEntry?.bottleId == bottle.id
+                    ? '正在记录 ' + bottle.name
+                    : _activeEntry == null
+                    ? '开始记录 ' + bottle.name
+                    : '切换到 ' + bottle.name,
+                onPressed: _busy || _activeEntry?.bottleId == bottle.id
+                    ? null
+                    : () => _startTimer(bottle),
+                icon: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: AppTheme.blue,
                 ),
+              ),
               PopupMenuButton<String>(
                 tooltip: '管理 ' + bottle.name,
                 icon: const Icon(Icons.more_horiz, size: 20),

@@ -42,41 +42,44 @@ void main() {
     expect((await repository.fetchActiveEntry())?.id, original.id);
   }
 
-  test('switches at a contiguous UTC boundary and conserves recorded time', () async {
-    final next = await repository.switchTimer(
-      expectedActiveEntryId: original.id!,
-      bottleId: second.id!,
-      at: boundary.toLocal(),
-    );
+  test(
+    'switches at a contiguous UTC boundary and conserves recorded time',
+    () async {
+      final next = await repository.switchTimer(
+        expectedActiveEntryId: original.id!,
+        bottleId: second.id!,
+        at: boundary.toLocal(),
+      );
 
-    final entries = await repository.fetchEntries();
-    expect(entries, hasLength(2));
-    final closed = entries.firstWhere((entry) => entry.id == original.id);
-    expect(closed.endedAt!.isAtSameMomentAs(boundary), isTrue);
-    expect(closed.durationSeconds, 15 * 60);
-    expect(closed.createdAt, original.createdAt);
-    expect(next.id, isNot(original.id));
-    expect(next.bottleId, second.id);
-    expect(next.isActive, isTrue);
-    expect(next.source, TimeEntrySource.active);
-    expect(next.startedAt.isAtSameMomentAs(closed.endedAt!), isTrue);
-    expect(entries.where((entry) => entry.isActive), hasLength(1));
-    expect((await repository.fetchActiveEntry())?.id, next.id);
-    final rows = await snapshot();
-    expect(rows.first['ended_at'], boundary.toIso8601String());
-    expect(rows.last['started_at'], boundary.toIso8601String());
+      final entries = await repository.fetchEntries();
+      expect(entries, hasLength(2));
+      final closed = entries.firstWhere((entry) => entry.id == original.id);
+      expect(closed.endedAt!.isAtSameMomentAs(boundary), isTrue);
+      expect(closed.durationSeconds, 15 * 60);
+      expect(closed.createdAt, original.createdAt);
+      expect(next.id, isNot(original.id));
+      expect(next.bottleId, second.id);
+      expect(next.isActive, isTrue);
+      expect(next.source, TimeEntrySource.active);
+      expect(next.startedAt.isAtSameMomentAs(closed.endedAt!), isTrue);
+      expect(entries.where((entry) => entry.isActive), hasLength(1));
+      expect((await repository.fetchActiveEntry())?.id, next.id);
+      final rows = await snapshot();
+      expect(rows.first['ended_at'], boundary.toIso8601String());
+      expect(rows.last['started_at'], boundary.toIso8601String());
 
-    final now = boundary.add(const Duration(minutes: 15));
-    final daily = TimeStatistics.forDate(
-      date: now.toLocal(),
-      now: now,
-      entries: entries,
-    );
-    expect(daily.forBottle(first.id!), const Duration(minutes: 15));
-    expect(daily.forBottle(second.id!), const Duration(minutes: 15));
-    expect(daily.recorded, const Duration(minutes: 30));
-    expect(daily.recorded + daily.unallocated, daily.elapsed);
-  });
+      final now = boundary.add(const Duration(minutes: 15));
+      final daily = TimeStatistics.forDate(
+        date: now.toLocal(),
+        now: now,
+        entries: entries,
+      );
+      expect(daily.forBottle(first.id!), const Duration(minutes: 15));
+      expect(daily.forBottle(second.id!), const Duration(minutes: 15));
+      expect(daily.recorded, const Duration(minutes: 30));
+      expect(daily.recorded + daily.unallocated, daily.elapsed);
+    },
+  );
 
   test('rejects a confirmation for a different active entry', () async {
     await expectRejected(
@@ -89,17 +92,20 @@ void main() {
     );
   });
 
-  test('rejects an archived target without stopping the current timer', () async {
-    await repository.archiveBottle(second.id!);
-    await expectRejected(
-      () => repository.switchTimer(
-        expectedActiveEntryId: original.id!,
-        bottleId: second.id!,
-        at: boundary,
-      ),
-      isA<StateError>(),
-    );
-  });
+  test(
+    'rejects an archived target without stopping the current timer',
+    () async {
+      await repository.archiveBottle(second.id!);
+      await expectRejected(
+        () => repository.switchTimer(
+          expectedActiveEntryId: original.id!,
+          bottleId: second.id!,
+          at: boundary,
+        ),
+        isA<StateError>(),
+      );
+    },
+  );
 
   test('rejects a missing target without stopping the current timer', () async {
     await expectRejected(
@@ -112,16 +118,19 @@ void main() {
     );
   });
 
-  test('same-bottle requests are rejected without splitting the record', () async {
-    await expectRejected(
-      () => repository.switchTimer(
-        expectedActiveEntryId: original.id!,
-        bottleId: first.id!,
-        at: boundary,
-      ),
-      isA<StateError>(),
-    );
-  });
+  test(
+    'same-bottle requests are rejected without splitting the record',
+    () async {
+      await expectRejected(
+        () => repository.switchTimer(
+          expectedActiveEntryId: original.id!,
+          bottleId: first.id!,
+          at: boundary,
+        ),
+        isA<StateError>(),
+      );
+    },
+  );
 
   test('rejects a stale confirmation after the timer has stopped', () async {
     await repository.stopTimer(endedAt: boundary);
@@ -181,7 +190,9 @@ void main() {
     expect(entries, hasLength(2));
     expect(entries.where((entry) => entry.isActive), hasLength(1));
     expect(
-      entries.singleWhere((entry) => !entry.isActive).endedAt!
+      entries
+          .singleWhere((entry) => !entry.isActive)
+          .endedAt!
           .isAtSameMomentAs(boundary),
       isTrue,
     );
@@ -200,8 +211,10 @@ void main() {
     });
   }
 
-  test('failed insertion rolls back the already closed original timer', () async {
-    await database.database.execute('''
+  test(
+    'failed insertion rolls back the already closed original timer',
+    () async {
+      await database.database.execute('''
       CREATE TRIGGER reject_switch_insert
       BEFORE INSERT ON time_entries
       WHEN NEW.bottle_id = ${second.id}
@@ -211,23 +224,24 @@ void main() {
         SELECT RAISE(ABORT, 'injected switch failure after closing original');
       END
     ''');
-    await expectRejected(
-      () => repository.switchTimer(
-        expectedActiveEntryId: original.id!,
-        bottleId: second.id!,
-        at: boundary,
-      ),
-      predicate<Object>(
-        (error) => error.toString().contains(
-          'injected switch failure after closing original',
+      await expectRejected(
+        () => repository.switchTimer(
+          expectedActiveEntryId: original.id!,
+          bottleId: second.id!,
+          at: boundary,
         ),
-        'the insertion trigger ran after the original record was closed',
-      ),
-    );
-    final restored = (await repository.fetchEntries()).single;
-    expect(restored.toMap(), original.toMap());
-    expect(restored.durationSeconds, isNull);
-  });
+        predicate<Object>(
+          (error) => error.toString().contains(
+            'injected switch failure after closing original',
+          ),
+          'the insertion trigger ran after the original record was closed',
+        ),
+      );
+      final restored = (await repository.fetchEntries()).single;
+      expect(restored.toMap(), original.toMap());
+      expect(restored.durationSeconds, isNull);
+    },
+  );
 
   for (final otherStart in [
     startedAt.add(const Duration(minutes: 5)),

@@ -29,8 +29,9 @@ void main() {
     'phone': const Size(390, 844),
     'desktop': const Size(1440, 960),
   }.entries) {
-    testWidgets('captures continuous sand flow on ' + viewport.key,
-        (tester) async {
+    testWidgets('captures continuous sand flow on ' + viewport.key, (
+      tester,
+    ) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = viewport.value;
       await tester.binding.setSurfaceSize(viewport.value);
@@ -46,34 +47,42 @@ void main() {
       var now = DateTime(2026, 10, 27, 15, 20);
       final learningId = await _seedData(repository, now);
       final boundaryKey = GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(
-        key: boundaryKey,
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          home: HomePage(
-            repository: repository,
-            clock: () => now,
-            enableTicker: false,
-            enableFlowAnimation: true,
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: boundaryKey,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            home: HomePage(
+              repository: repository,
+              clock: () => now,
+              enableTicker: false,
+              enableFlowAnimation: true,
+            ),
           ),
         ),
-      ));
-      await _until(tester, () =>
-          find.byKey(ValueKey('start-$learningId')).evaluate().isNotEmpty);
+      );
+      await _until(
+        tester,
+        () => find.byKey(ValueKey('start-$learningId')).evaluate().isNotEmpty,
+      );
       Object? imageError;
-      await tester.runAsync(() => precacheImage(
-        const AssetImage('assets/scenes/coastal-sunrise.jpg'),
-        tester.element(find.byType(HomePage)),
-        onError: (error, stackTrace) => imageError = error,
-      ));
+      await tester.runAsync(
+        () => precacheImage(
+          const AssetImage('assets/scenes/coastal-sunrise.jpg'),
+          tester.element(find.byType(HomePage)),
+          onError: (error, stackTrace) => imageError = error,
+        ),
+      );
       expect(imageError, isNull, reason: 'Capture must use the real scene.');
       await tester.pump();
       await tester.pump();
       expect(await repository.fetchActiveEntry(), isNull);
       expect(_flow(tester).debugParticleCount, 0);
       await _saveFrame(
-        tester, boundaryKey, viewport.value,
+        tester,
+        boundaryKey,
+        viewport.value,
         'sand-flow-' + viewport.key + '-00-idle',
       );
 
@@ -95,18 +104,26 @@ void main() {
       final runningBytes = <List<int>>[];
       for (final sample in samples) {
         elapsedMilliseconds += sample.advance;
-        now = DateTime(2026, 10, 27, 15, 20).add(
-          Duration(milliseconds: elapsedMilliseconds),
-        );
+        now = DateTime(
+          2026,
+          10,
+          27,
+          15,
+          20,
+        ).add(Duration(milliseconds: elapsedMilliseconds));
         await _frames(tester, Duration(milliseconds: sample.advance));
         expect(_flow(tester).debugParticleCount, greaterThan(0));
         expect(_flow(tester).debugIsEmitting, isTrue);
         expect(_flow(tester).debugTargetBottleId, learningId);
         expect(tester.takeException(), isNull);
-        runningBytes.add(await _saveFrame(
-          tester, boundaryKey, viewport.value,
-          'sand-flow-' + viewport.key + '-' + sample.name,
-        ));
+        runningBytes.add(
+          await _saveFrame(
+            tester,
+            boundaryKey,
+            viewport.value,
+            'sand-flow-' + viewport.key + '-' + sample.name,
+          ),
+        );
       }
       expect(_flow(tester).debugEmissionCount, greaterThan(initialEmissions));
       // A repeated static overlay cannot satisfy the sequential frame evidence.
@@ -114,16 +131,23 @@ void main() {
       expect(runningBytes[1], isNot(orderedEquals(runningBytes[2])));
 
       await tester.tap(find.byKey(const ValueKey('stop-timer-button')));
-      await _until(tester, () =>
-          tester.widget<SandFlowSurface>(find.byType(SandFlowSurface))
-              .activeBottleId == null);
+      await _until(
+        tester,
+        () =>
+            tester
+                .widget<SandFlowSurface>(find.byType(SandFlowSurface))
+                .activeBottleId ==
+            null,
+      );
       expect(await repository.fetchActiveEntry(), isNull);
       expect(_flow(tester).debugIsEmitting, isFalse);
       expect(_flow(tester).debugParticleCount, greaterThan(0));
       final stoppedEmissions = _flow(tester).debugEmissionCount;
       await _frames(tester, const Duration(milliseconds: 250));
       await _saveFrame(
-        tester, boundaryKey, viewport.value,
+        tester,
+        boundaryKey,
+        viewport.value,
         'sand-flow-' + viewport.key + '-04-draining-0250ms',
       );
       await _frames(tester, const Duration(milliseconds: 1750));
@@ -131,7 +155,9 @@ void main() {
       expect(_flow(tester).debugEmissionCount, stoppedEmissions);
       expect(_flow(tester).debugMotionRunning, isFalse);
       await _saveFrame(
-        tester, boundaryKey, viewport.value,
+        tester,
+        boundaryKey,
+        viewport.value,
         'sand-flow-' + viewport.key + '-05-stopped-2000ms',
       );
       final entries = await repository.fetchEntries();
@@ -172,8 +198,9 @@ Future<int> _seedData(TimeRecordsRepository repository, DateTime now) async {
 
 Future<void> _until(WidgetTester tester, bool Function() ready) async {
   for (var frame = 0; frame < 100 && !ready(); frame++) {
-    await tester.runAsync(() =>
-        Future<void>.delayed(const Duration(milliseconds: 2)));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 2)),
+    );
     await tester.pump(const Duration(milliseconds: 16));
   }
   expect(ready(), isTrue, reason: 'The bounded UI transition must finish.');

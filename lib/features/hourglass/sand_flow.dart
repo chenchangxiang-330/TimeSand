@@ -44,8 +44,9 @@ class SandFlowGeometry {
   late final Path path;
   late final PathMetric metric;
 
-  Offset position(double fraction) =>
-      metric.getTangentForOffset(metric.length * fraction.clamp(0, 1))!.position;
+  Offset position(double fraction) => metric
+      .getTangentForOffset(metric.length * fraction.clamp(0, 1))!
+      .position;
 }
 
 /// Decorative flow follows persisted activeBottleId. It never writes records
@@ -111,9 +112,12 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
   SandFlowGeometry? get debugGeometry => _geometry;
   List<Offset> get debugParticlePositions => _geometry == null
       ? const []
-      : _particles.where((grain) => grain.fraction < .74).map((grain) {
-          return _externalPosition(grain, _geometry!);
-        }).toList(growable: false);
+      : _particles
+            .where((grain) => grain.fraction < .74)
+            .map((grain) {
+              return _externalPosition(grain, _geometry!);
+            })
+            .toList(growable: false);
 
   bool get _canShow =>
       widget.visible && _foreground && _tickerMode && _geometry != null;
@@ -123,7 +127,8 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
   void initState() {
     super.initState();
     _displayId = widget.activeBottleId;
-    _foreground = WidgetsBinding.instance.lifecycleState == null ||
+    _foreground =
+        WidgetsBinding.instance.lifecycleState == null ||
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
     _motion = AnimationController(
       vsync: this,
@@ -177,10 +182,13 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
 
   Rect? _bounds(GlobalKey? key, RenderBox root) {
     final render = key?.currentContext?.findRenderObject();
-    if (render is! RenderBox || !render.attached || !render.hasSize) return null;
+    if (render is! RenderBox || !render.attached || !render.hasSize)
+      return null;
     return Rect.fromPoints(
       root.globalToLocal(render.localToGlobal(Offset.zero)),
-      root.globalToLocal(render.localToGlobal(render.size.bottomRight(Offset.zero))),
+      root.globalToLocal(
+        render.localToGlobal(render.size.bottomRight(Offset.zero)),
+      ),
     );
   }
 
@@ -199,11 +207,18 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
     if (source == null || target == null || shelf == null) {
       _geometry = null;
     } else {
-      final outlet = source.topLeft + HourglassPlaceholder.outletFor(source.size);
-      final mouth = target.topLeft + Offset(
-        target.width * GlassBottleGeometry.mouth.dx / GlassBottleGeometry.designSize.width,
-        target.height * GlassBottleGeometry.mouth.dy / GlassBottleGeometry.designSize.height,
-      );
+      final outlet =
+          source.topLeft + HourglassPlaceholder.outletFor(source.size);
+      final mouth =
+          target.topLeft +
+          Offset(
+            target.width *
+                GlassBottleGeometry.mouth.dx /
+                GlassBottleGeometry.designSize.width,
+            target.height *
+                GlassBottleGeometry.mouth.dy /
+                GlassBottleGeometry.designSize.height,
+          );
       final visibleShelf = viewport.intersect(shelf);
       if (!viewport.deflate(2).contains(outlet) ||
           !visibleShelf.deflate(2).contains(mouth)) {
@@ -221,7 +236,9 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
               if (_bounds(key, root) case final Rect rect) rect.inflate(3),
           ],
         );
-        _color = (widget.colors[_displayId] ?? Colors.white).withValues(alpha: 1);
+        _color = (widget.colors[_displayId] ?? Colors.white).withValues(
+          alpha: 1,
+        );
       }
     }
     _syncMotion();
@@ -285,10 +302,16 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
     var point = geometry.position(progress);
     final old = _previousGeometry;
     if (old != null && _transition < 1) {
-      point = Offset.lerp(old.position(progress), point, Curves.easeInOut.transform(_transition))!;
+      point = Offset.lerp(
+        old.position(progress),
+        point,
+        Curves.easeInOut.transform(_transition),
+      )!;
     }
-    final sway = math.sin(grain.age * 12 + grain.seed) *
-        math.sin(math.pi * progress) * 1.35;
+    final sway =
+        math.sin(grain.age * 12 + grain.seed) *
+        math.sin(math.pi * progress) *
+        1.35;
     return point + Offset(sway, 0);
   }
 
@@ -315,7 +338,9 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
                 child: IgnorePointer(
                   child: ExcludeSemantics(
                     child: RepaintBoundary(
-                      child: CustomPaint(painter: _SandFlowPainter(this, _repaint)),
+                      child: CustomPaint(
+                        painter: _SandFlowPainter(this, _repaint),
+                      ),
                     ),
                   ),
                 ),
@@ -356,7 +381,11 @@ class _SandFlowPainter extends CustomPainter {
     if (geometry == null || !state._canShow) return;
     final active = state.widget.activeBottleId != null;
     if (!active && state._particles.isEmpty) return;
-    final color = Color.lerp(state._previousColor, state._color, state._transition)!;
+    final color = Color.lerp(
+      state._previousColor,
+      state._color,
+      state._transition,
+    )!;
     canvas.save();
     canvas.clipRect(geometry.viewport);
     // This layer spans cards but cannot draw over captions, buttons, or nav.
@@ -367,7 +396,11 @@ class _SandFlowPainter extends CustomPainter {
       if (active) {
         for (var i = 0; i <= 22; i++) {
           final p = i / 22;
-          _grainPaint.color = Color.lerp(Colors.white, color, math.max(0, (p - .65) / .35))!.withValues(alpha: .8);
+          _grainPaint.color = Color.lerp(
+            Colors.white,
+            color,
+            math.max(0, (p - .65) / .35),
+          )!.withValues(alpha: .8);
           canvas.drawCircle(geometry.position(p), 1.05, _grainPaint);
         }
         final end = geometry.mouth - const Offset(0, 6);
@@ -375,7 +408,13 @@ class _SandFlowPainter extends CustomPainter {
           ..color = color.withValues(alpha: .8)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.3;
-        canvas.drawPath(Path()..moveTo(end.dx - 3, end.dy - 3)..lineTo(end.dx, end.dy)..lineTo(end.dx + 3, end.dy - 3), _grainPaint);
+        canvas.drawPath(
+          Path()
+            ..moveTo(end.dx - 3, end.dy - 3)
+            ..lineTo(end.dx, end.dy)
+            ..lineTo(end.dx + 3, end.dy - 3),
+          _grainPaint,
+        );
         _grainPaint.style = PaintingStyle.fill;
       }
     } else {
@@ -383,7 +422,11 @@ class _SandFlowPainter extends CustomPainter {
         if (grain.fraction >= .74) continue;
         final point = state._externalPosition(grain, geometry);
         final progress = grain.fraction / .74;
-        final tint = Color.lerp(const Color(0xFFFFFCF1), color, ((progress - .65) / .35).clamp(0.0, 1.0))!;
+        final tint = Color.lerp(
+          const Color(0xFFFFFCF1),
+          color,
+          ((progress - .65) / .35).clamp(0.0, 1.0),
+        )!;
         final radius = .7 + (grain.seed % 5) * .17;
         _glowPaint.color = tint.withValues(alpha: .15);
         canvas.drawCircle(point, radius * 2.6, _glowPaint);
@@ -398,7 +441,10 @@ class _SandFlowPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(geometry.bottleClip);
     canvas.translate(geometry.bottleRect.left, geometry.bottleRect.top);
-    canvas.scale(geometry.bottleRect.width / 98, geometry.bottleRect.height / 140);
+    canvas.scale(
+      geometry.bottleRect.width / 98,
+      geometry.bottleRect.height / 140,
+    );
     canvas.clipPath(geometry.bottle.interior);
     for (final grain in state._particles) {
       final p = grain.fraction;
@@ -418,12 +464,17 @@ class _SandFlowPainter extends CustomPainter {
         y = geometry.bottle.surfaceY - math.sin(landing * math.pi) * 3;
         alpha = (1 - landing) * .8;
       }
-      _grainPaint.color = Color.lerp(color, Colors.white, .7)!.withValues(alpha: alpha);
+      _grainPaint.color = Color.lerp(
+        color,
+        Colors.white,
+        .7,
+      )!.withValues(alpha: alpha);
       canvas.drawCircle(Offset(x, y), .85 + grain.seed % 3 * .15, _grainPaint);
     }
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _SandFlowPainter oldDelegate) => oldDelegate.state != state;
+  bool shouldRepaint(covariant _SandFlowPainter oldDelegate) =>
+      oldDelegate.state != state;
 }
