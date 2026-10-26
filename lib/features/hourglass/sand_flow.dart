@@ -440,7 +440,11 @@ class _SandFlowPainter extends CustomPainter {
         final radius = .7 + (grain.seed % 5) * .17;
         _glowPaint.color = tint.withValues(alpha: .15);
         canvas.drawCircle(point, radius * 2.6, _glowPaint);
-        canvas.drawCircle(point + const Offset(0, .35), radius * 1.55, _depthPaint);
+        canvas.drawCircle(
+          point + const Offset(0, .35),
+          radius * 1.55,
+          _depthPaint,
+        );
         _grainPaint.color = tint.withValues(alpha: .94);
         canvas.drawCircle(point, radius, _grainPaint);
       }
