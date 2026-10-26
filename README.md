@@ -5,6 +5,20 @@ TimeSand（时间之沙）是一款面向个人成长的艺术化时间管理 Ap
 > 时间终将流逝，但你可以决定它流向哪里。  
 > Time will pass, but you decide where it flows.
 
+## 主沙漏到活动时间瓶的流沙
+
+此分支从 main `79deaf6` 创建，并按确认的范围用独立基础提交纳入 PR #4 的玻璃 UI 与 Android 启动修复；PR #4 和 Phase 2.1 PR #3 均保持独立、未自动合并。版本为 0.2.2+4。
+
+- 点击瓶子播放按钮，数据库开始计时成功后才发出持续沙流。流向由活动记录的 bottleId 决定，单独选择瓶子不会改变正在记录的目标。
+- 统一视口坐标实测沙漏出口和瓶口，贝塞尔曲线经过文字外侧的留白，末端垂直入瓶。滚动、窗口变化和横向瓶架滚动后重新测量。
+- 白色细粒接近瓶口时转为瓶子颜色；瓶内下落、落点散粒使用与玻璃绘制相同的内部轮廓和真实沙面。高光只表示活动状态，不扩大统计量。
+- 停止操作先保存真实结束时间，再停止发射；在途粒子最长约 1.82 秒后消失。切换目标必须确认，事务在同一 UTC 边界结束旧记录并开始新记录，失败全部回滚。
+- 主沙漏仍按自然日进度显示；瓶内填充仍是该瓶占今日已记录时长的比例。动画不会计时、修改累计值或逐帧写入 SQLite，跨午夜计算与活动记录恢复保持原逻辑。
+- 最多 144 个粒子，独立绘制层与 RepaintBoundary 限制重绘。离开首页、进入后台或出口/瓶口不可见时停止装饰动画；重新显示时直接恢复当前状态，不补播离开期间的粒子。
+- 减少动画时使用静态点状流向及活动高光。流沙层 IgnorePointer，不拦截瓶身详情、按钮或滚动。
+
+连续帧由云端 Flutter Widget 测试运行实际首页，通过真实按钮开始“学习”、持续运行、停止并等待粒子落完。演示使用固定测试时钟和独立内存数据库，不是真机录屏，也不会向生产数据库填充样本。帧文件见 [docs/animation](docs/animation)，PR Artifact 同时提供演示文件与双端开发安装包。
+
 ## 玻璃沙漏 UI
 
 本分支基于 main 的 Phase 2（79deaf6）进行原生 Flutter UI 改造。按用户确认，Phase 2.1 PR #3 保持独立，当前分支不包含其导入/导出或 schema 2 迁移；SQLite schema 1 和已有数据不变。
@@ -87,7 +101,7 @@ lib/
   design/                      共享视觉设计
   features/
     home/                      首页、瓶子列表和当前计时
-    hourglass/                 实时玻璃沙漏
+    hourglass/                 实时玻璃沙漏、跨组件流沙及生命周期
     bottles/                   永久成长瓶详情
     history/                   日期筛选、补录、编辑和删除
     statistics/                真实每日和永久统计
@@ -148,13 +162,14 @@ flutter test
 - 每日瓶、永久成长瓶和时间海洋统计
 - 跨午夜和边界时刻
 - 首页显示瓶子、开始/停止按钮和历史页面导航
+- 事务切换与失败回滚；流沙目标、失败开始、停止收尾、恢复、缩放/滚动锚点、点击穿透和减少动画
 
 ## 视觉验证
 
 普通 flutter test 保留已有测试并运行响应式/交互回归。截图测试默认跳过；CI 单独启用：
 
 ~~~sh
-RUN_UI_SCREENSHOTS=true flutter test test/visual/glass_screenshots_test.dart --concurrency=1
+RUN_UI_SCREENSHOTS=true flutter test test/visual --concurrency=1
 ~~~
 
 输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。海景照片处理和原有回退背景重建使用 Python/Pillow 11.3.0，不参与 App 运行；Android 目录修复增加了 path_provider。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。

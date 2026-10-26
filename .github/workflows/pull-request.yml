@@ -45,7 +45,7 @@ jobs:
       - name: Render phone and desktop UI
         env:
           RUN_UI_SCREENSHOTS: 'true'
-        run: flutter test test/visual/glass_screenshots_test.dart --concurrency=1
+        run: flutter test test/visual --concurrency=1
 
       - name: Upload actual widget screenshots
         uses: actions/upload-artifact@v4

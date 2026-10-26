@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:ui' show ClipOp, PathMetric;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../design/bottle_geometry.dart';
 import 'hourglass_placeholder.dart';
@@ -26,12 +25,15 @@ class SandFlowGeometry {
     final lane = (left - 10).clamp(7.0, viewport.width - 7).toDouble();
     // Travel through the content gutter, outside captions and shelf headings.
     // The final control point shares the mouth's x, making entry vertical.
-    final approachY = mouth.dy - 16;
+    final headingBottom = obstacles
+        .where((rect) => rect.top > source.dy && rect.bottom < mouth.dy)
+        .fold<double>(source.dy + 8, (bottom, rect) => math.max(bottom, rect.bottom + 4));
+    final approachY = math.min(mouth.dy - 4, math.max(mouth.dy - 16, headingBottom));
     path = Path()
       ..moveTo(source.dx, source.dy)
       ..cubicTo(source.dx, source.dy + 4, lane, source.dy, lane, source.dy + 8)
-      ..lineTo(lane, math.max(source.dy + 8, approachY - 12))
-      ..cubicTo(lane, approachY, mouth.dx, approachY, mouth.dx, mouth.dy);
+      ..lineTo(lane, approachY)
+      ..cubicTo(lane, approachY + 6, mouth.dx, approachY, mouth.dx, mouth.dy);
     metric = path.computeMetrics().first;
   }
 
@@ -455,7 +457,7 @@ class _SandFlowPainter extends CustomPainter {
       double alpha;
       if (p < .92) {
         final fall = (p - .74) / .18;
-        x = 49 + math.sin(grain.seed * 2.1 + fall * 5) * .75;
+        x = 49 + math.sin(grain.seed * 2.1 + fall * 5) * .75 * math.sin(math.pi * fall);
         y = 15 + (geometry.bottle.surfaceY - 15) * fall;
         alpha = .9;
       } else {

@@ -512,4 +512,12 @@ void _expectAnchors(WidgetTester tester, int bottleId) {
     lessThan(.5),
   );
   expect(geometry.bottleRect.size, bottleRect.size);
+  for (var sample = 0; sample <= 180; sample++) {
+    final point = geometry.position(sample / 180);
+    expect(
+      geometry.obstacles.any((rect) => rect.contains(point)),
+      isFalse,
+      reason: 'The continuous stream must route outside text, not be clipped by it.',
+    );
+  }
 }
