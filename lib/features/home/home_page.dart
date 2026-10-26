@@ -610,6 +610,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
               PopupMenuButton<String>(
+                enabled: !_busy,
                 tooltip: '管理 ' + bottle.name,
                 icon: const Icon(Icons.more_horiz, size: 20),
                 onSelected: (value) => value == 'edit'
@@ -1189,31 +1190,43 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _archiveBottle(Bottle bottle) async {
+    if (_busy) return;
     if (_activeEntry?.bottleId == bottle.id) {
       _showMessage('请先停止此瓶子的计时，再归档。');
       return;
     }
-    final shouldArchive = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        scrollable: true,
-        title: const Text('归档时间之瓶？'),
-        content: const Text('归档后不会出现在首页，但历史投入仍会保留。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('归档'),
-          ),
-        ],
-      ),
-    );
-    if (shouldArchive == true) {
+    setState(() => _busy = true);
+    try {
+      final shouldArchive = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          scrollable: true,
+          title: const Text('归档时间之瓶？'),
+          content: const Text('归档后不会出现在首页，但历史投入仍会保留。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('归档'),
+            ),
+          ],
+        ),
+      );
+      if (shouldArchive != true || !mounted) return;
+      final active = await widget.repository.fetchActiveEntry();
+      if (active?.bottleId == bottle.id) {
+        _showMessage('请先停止此瓶子的计时，再归档。');
+        return;
+      }
       await widget.repository.archiveBottle(bottle.id!);
       await _load();
+    } catch (error) {
+      if (mounted) _showMessage(error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 

@@ -406,7 +406,7 @@ class _GlassHourglassPainter extends CustomPainter {
   // A short glass nozzle joins the bottom rim to the external stream anchor.
   // It is decorative: neither its shape nor its paint changes recorded time.
   void _outlet(Canvas canvas) {
-    final tip = HourglassPlaceholder._designOutlet;
+    const tip = HourglassPlaceholder._designOutlet;
     final nozzle = Path()
       ..moveTo(_center - 5, _bottom + 4)
       ..lineTo(_center - 4, tip.dy - 6)
@@ -436,7 +436,7 @@ class _GlassHourglassPainter extends CustomPainter {
         ..strokeWidth = 0.8,
     );
     canvas.drawLine(
-      Offset(_center - 1.5, _bottom + 7),
+      const Offset(_center - 1.5, _bottom + 7),
       Offset(tip.dx - 0.6, tip.dy - 1),
       Paint()
         ..color = _white.withValues(alpha: 0.9)

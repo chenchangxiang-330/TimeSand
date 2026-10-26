@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show ClipOp, PathMetric;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -85,7 +86,7 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const maxParticles = 144;
   final _coordinateKey = GlobalKey();
-  final _repaint = ChangeNotifier();
+  final _repaint = _FlowRepaint();
   final _particles = <_Grain>[];
   late final AnimationController _motion;
   SandFlowGeometry? _geometry;
@@ -156,7 +157,7 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
       _previousColor = _color;
       _transition = _geometry == null ? 1 : 0;
       // No old bottle continues receiving after a confirmed switch.
-      _particles.removeWhere((grain) => grain.fraction >= .60);
+      _particles.removeWhere((grain) => grain.fraction >= .40);
       _displayId = next;
     }
     // When next is null keep the last target only until in-flight grains land.
@@ -197,7 +198,7 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
     if (root is! RenderBox || !root.hasSize || !widget.visible) {
       _geometry = null;
       _syncMotion();
-      _repaint.notifyListeners();
+      _repaint.markChanged();
       return;
     }
     final viewport = Offset.zero & root.size;
@@ -242,7 +243,7 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
       }
     }
     _syncMotion();
-    _repaint.notifyListeners();
+    _repaint.markChanged();
   }
 
   void _syncMotion() {
@@ -294,7 +295,7 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
       _spawnRemainder = 0;
     }
     if (widget.activeBottleId == null && _particles.isEmpty) _syncMotion();
-    _repaint.notifyListeners();
+    _repaint.markChanged();
   }
 
   Offset _externalPosition(_Grain grain, SandFlowGeometry geometry) {
@@ -477,4 +478,8 @@ class _SandFlowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SandFlowPainter oldDelegate) =>
       oldDelegate.state != state;
+}
+
+class _FlowRepaint extends ChangeNotifier {
+  void markChanged() => notifyListeners();
 }
