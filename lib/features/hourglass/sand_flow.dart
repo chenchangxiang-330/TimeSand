@@ -43,6 +43,29 @@ class SandFlowGeometry {
     metric = path.computeMetrics().first;
   }
 
+  /// Builds the external route for one retarget frame. All bottles share the
+  /// shelf's mouth height, so the latest layout supplies the y coordinate.
+  /// Interpolate the destination before routing: blending points on paths with
+  /// different lengths can cut diagonally through the protected headings.
+  SandFlowGeometry retargetFrom(SandFlowGeometry previous, double transition) {
+    if (transition >= 1) return this;
+    final t = Curves.easeInOut.transform(
+      transition.clamp(0.0, 1.0).toDouble(),
+    );
+    return SandFlowGeometry(
+      source: source,
+      mouth: Offset(
+        previous.mouth.dx + (mouth.dx - previous.mouth.dx) * t,
+        mouth.dy,
+      ),
+      bottleRect: bottleRect,
+      viewport: viewport,
+      bottleClip: bottleClip,
+      bottle: bottle,
+      obstacles: obstacles,
+    );
+  }
+
   final Offset source;
   final Offset mouth;
   final Rect bottleRect;
@@ -99,6 +122,10 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
   late final AnimationController _motion;
   SandFlowGeometry? _geometry;
   SandFlowGeometry? _previousGeometry;
+  SandFlowGeometry? _cachedRoute;
+  SandFlowGeometry? _cachedRouteDestination;
+  SandFlowGeometry? _cachedRouteOrigin;
+  double _cachedRouteTransition = -1;
   Color _color = Colors.white;
   Color _previousColor = Colors.white;
   int? _displayId;
@@ -119,14 +146,15 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
   bool get debugMotionRunning => _motion.isAnimating;
   bool get debugReducedMotion => _reduceMotion;
   SandFlowGeometry? get debugGeometry => _geometry;
-  List<Offset> get debugParticlePositions => _geometry == null
-      ? const []
-      : _particles
-            .where((grain) => grain.fraction < .74)
-            .map((grain) {
-              return _externalPosition(grain, _geometry!);
-            })
-            .toList(growable: false);
+  List<Offset> get debugParticlePositions {
+    final geometry = _geometry;
+    if (geometry == null) return const [];
+    final route = _externalRoute(geometry);
+    return _particles
+        .where((grain) => grain.fraction < .74)
+        .map((grain) => _externalPosition(grain, route))
+        .toList(growable: false);
+  }
 
   bool get _canShow =>
       widget.visible && _foreground && _tickerMode && _geometry != null;
@@ -306,17 +334,25 @@ class SandFlowSurfaceState extends State<SandFlowSurface>
     _repaint.markChanged();
   }
 
-  Offset _externalPosition(_Grain grain, SandFlowGeometry geometry) {
-    final progress = (grain.fraction / .74).clamp(0.0, 1.0);
-    var point = geometry.position(progress);
-    final old = _previousGeometry;
-    if (old != null && _transition < 1) {
-      point = Offset.lerp(
-        old.position(progress),
-        point,
-        Curves.easeInOut.transform(_transition),
-      )!;
+  SandFlowGeometry _externalRoute(SandFlowGeometry geometry) {
+    final previous = _previousGeometry;
+    if (previous == null || _transition >= 1) return geometry;
+    // One path and metric per retarget frame, shared by every external grain.
+    // Reuse it for diagnostics too, rather than rebuilding it per particle.
+    if (!identical(_cachedRouteDestination, geometry) ||
+        !identical(_cachedRouteOrigin, previous) ||
+        _cachedRouteTransition != _transition) {
+      _cachedRoute = geometry.retargetFrom(previous, _transition);
+      _cachedRouteDestination = geometry;
+      _cachedRouteOrigin = previous;
+      _cachedRouteTransition = _transition;
     }
+    return _cachedRoute!;
+  }
+
+  Offset _externalPosition(_Grain grain, SandFlowGeometry route) {
+    final progress = (grain.fraction / .74).clamp(0.0, 1.0);
+    final point = route.position(progress);
     final sway =
         math.sin(grain.age * 12 + grain.seed) *
         math.sin(math.pi * progress) *
@@ -428,9 +464,10 @@ class _SandFlowPainter extends CustomPainter {
         _grainPaint.style = PaintingStyle.fill;
       }
     } else {
+      final route = state._externalRoute(geometry);
       for (final grain in state._particles) {
         if (grain.fraction >= .74) continue;
-        final point = state._externalPosition(grain, geometry);
+        final point = state._externalPosition(grain, route);
         final progress = grain.fraction / .74;
         final tint = Color.lerp(
           const Color(0xFFFFFCF1),

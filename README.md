@@ -87,7 +87,7 @@ SQLite 数据库使用 sqflite_common_ffi，在 Android、macOS 和 Flutter 测�
 - Android（Debug APK，云端构建）
 - macOS（Debug .app，云端构建，未签名）
 
-Phase 2 真机回归已由用户确认完成。本次玻璃 UI 的触控、键盘、系统窗口和实际设备性能仍需 Android/macOS 真机回归；云端 Widget 截图不能替代真机验收。构建产物只用于开发测试，没有正式 Developer ID 签名或公证。
+Phase 2 真机回归已由用户确认完成。本次流沙动画及所纳入玻璃 UI 的触控、键盘、系统窗口和实际设备性能仍需 Android/macOS 真机回归；云端 Widget 截图不能替代真机验收。构建产物只用于开发测试，没有正式 Developer ID 签名或公证。
 
 ## 工程结构
 
@@ -117,6 +117,7 @@ test_driver/                   Flutter 集成测试驱动
 assets/scenes/                 离线海景照片、原创回退背景与来源说明
 tool/                          资产处理源码及核实授权的原始照片
 docs/ui/                       云端实际实现截图
+docs/animation/                开始、持续流沙、停止的实际连续帧
 android/                       Android 宿主工程
 macos/                         macOS 宿主工程
 .github/workflows/
@@ -172,7 +173,7 @@ flutter test
 RUN_UI_SCREENSHOTS=true flutter test test/visual --concurrency=1
 ~~~
 
-输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。海景照片处理和原有回退背景重建使用 Python/Pillow 11.3.0，不参与 App 运行；Android 目录修复增加了 path_provider。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。
+输出 build/ui-screenshots/*.png。截图 runner 安装 fonts-roboto 和 fonts-noto-cjk（仅测试字体，不打包到 App）。桌面连续帧的轻量 JPEG 预览由 tool/render_sand_flow_previews.py 从实际 PNG 原图转换，保留原尺寸和全部无损原图。海景照片处理、预览转换和原有回退背景重建使用 Python/Pillow 11.3.0，不参与 App 运行；Android 目录修复增加了 path_provider。测试字体的许可随 Ubuntu 软件包提供；不复制到仓库或 App，运行 App 使用系统字体回退。
 
 ## GitHub Actions
 
