@@ -271,8 +271,7 @@ void main() {
       _expectAnchors(tester, bottles.last.id!);
       final horizontal = find.byWidgetPredicate(
         (widget) =>
-            widget is Scrollable &&
-            widget.axisDirection == AxisDirection.right,
+            widget is Scrollable && widget.axisDirection == AxisDirection.right,
       );
       expect(horizontal, findsOneWidget);
       final position = tester.state<ScrollableState>(horizontal).position;
@@ -284,7 +283,10 @@ void main() {
       expect(flow.debugIsEmitting, isTrue);
       expect(flow.debugGeometry!.mouth.dx, closeTo(initial.mouth.dx - 20, .5));
       expect(flow.debugGeometry!.mouth.dy, closeTo(initial.mouth.dy, .5));
-      expect((flow.debugGeometry!.source - initial.source).distance, lessThan(.5));
+      expect(
+        (flow.debugGeometry!.source - initial.source).distance,
+        lessThan(.5),
+      );
       _expectAnchors(tester, bottles.last.id!);
 
       position.jumpTo(position.maxScrollExtent);
