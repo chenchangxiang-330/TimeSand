@@ -1,0 +1,40 @@
+name: UI concept previews
+on:
+  push:
+    branches: [design/ui-concepts-20261112]
+    paths: ['design/ui-concepts-20261112/**', '.github/workflows/ui-concepts.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: design/ui-concepts-20261112
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-audit --no-fund
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu/' | sudo tee /etc/apt/apt-mirrors.txt > /dev/null
+          npx playwright install --with-deps chromium
+          sudo apt-get -o Acquire::https::Timeout=20 -o Acquire::Retries=1 install -y fonts-noto-cjk
+      - name: Generate five standalone HTML files
+        run: node build.mjs
+      - name: Test interactions and render phone and desktop screenshots
+        run: |
+          python3 -m http.server 8765 --directory dist > /tmp/timesand-preview-http.log 2>&1 &
+          node verify.mjs
+      - name: Upload offline prototypes and actual screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TimeSand-five-UI-concepts
+          path: design/ui-concepts-20261112/dist
+          if-no-files-found: error
+          retention-days: 3

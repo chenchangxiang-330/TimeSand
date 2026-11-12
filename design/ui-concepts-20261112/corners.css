@@ -1,0 +1,5 @@
+
+@supports(corner-shape:squircle){.panel,.day-summary,.bottle-section,.ocean-card,.stat-card,.timer-bar,.bottom-nav,.bottle-card,dialog,button{corner-shape:superellipse(1.5)}}
+.panel,.day-summary,.bottle-section,.ocean-card,.stat-card{border-radius:max(22px,var(--radius));transition:background-color .25s ease,box-shadow .25s ease}
+dialog[open]{animation:arrive .24s cubic-bezier(.22,.8,.25,1)}@keyframes arrive{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+button{transition:background-color .18s,transform .18s}button:active{transform:scale(.975)}

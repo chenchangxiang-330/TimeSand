@@ -1,0 +1,47 @@
+[
+  {
+    "id": "coast",
+    "code": "A",
+    "name": "澄光海岸",
+    "headline": "把时间，<br>流向喜欢的生活。",
+    "eyebrow": "A QUIETER KIND OF PROGRESS",
+    "description": "延续 TimeSand 的天空、海洋与玻璃瓶，降低背景干扰。以沙漏为视觉中心，柔和光线配合深蓝文字；适合希望保留艺术感、又更清楚好用的方向。推荐优先考虑。",
+    "reference": "借鉴番茄 ToDo 对计时主操作的突出处理，保留 TimeSand 自有沙漏与海洋语言。"
+  },
+  {
+    "id": "paper",
+    "code": "B",
+    "name": "留白纸境",
+    "headline": "每一刻，<br>都值得被记下。",
+    "eyebrow": "A JOURNAL OF YOUR HOURS",
+    "description": "米白纸面、墨色衬线与琥珀细节。用编辑式留白和细线组织时间，像一本有呼吸感的成长手账；玻璃与装饰更克制，适合长时间阅读与复盘。",
+    "reference": "借鉴滴答清单的清晰层级与时间线，结合块时间对时间区间的强调。"
+  },
+  {
+    "id": "forest",
+    "code": "C",
+    "name": "森屿生长",
+    "headline": "慢慢来，<br>时间会看见生长。",
+    "eyebrow": "GROW AT YOUR OWN PACE",
+    "description": "鼠尾草绿、圆拱与植物轮廓，让时间瓶成为一座安静的园圃。强调轻负担和温柔反馈；没有打卡完成率、排名或奖励机制。",
+    "reference": "借鉴小日常的轻量色彩图标与易理解的入口，不引入其打卡或积分规则。"
+  },
+  {
+    "id": "night",
+    "code": "D",
+    "name": "极夜星砂",
+    "headline": "收起喧嚣，<br>让这一刻发光。",
+    "eyebrow": "A CONSTELLATION OF MOMENTS",
+    "description": "深午夜蓝、暖白沙粒和环形舞台。中央沙漏与活动状态更突出，数据放在安静的侧列；适合夜间、专注时使用，保持足够文字对比。",
+    "reference": "借鉴番茄 ToDo 的单一计时焦点与小日常的深色方向，视觉为原创。"
+  },
+  {
+    "id": "studio",
+    "code": "E",
+    "name": "时光工作室",
+    "headline": "认真投入，<br>也清楚回看。",
+    "eyebrow": "MAKE ROOM FOR WHAT MATTERS",
+    "description": "暖白、珊瑚与深蓝的现代工作台。标题与统计构成清楚的操作区，沙漏作为右侧主视觉；信息更紧凑，适合桌面工作与高频查看记录。",
+    "reference": "借鉴时光序的分区和视图组织、滴答清单的稳定导航，不增加综合工具模块。"
+  }
+]

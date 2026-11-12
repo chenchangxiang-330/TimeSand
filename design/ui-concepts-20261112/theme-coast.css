@@ -1,0 +1,19 @@
+
+body.theme-coast{--bg:#eef3f3;--surface:#ffffffa8;--ink:#1c4654;--muted:#547583;--accent:#267d9c;--line:#b7ccd479;--soft:#d9eaf0;--shadow:0 18px 55px #355c6b0a;--radius:30px;background:radial-gradient(ellipse at 90% 10%,#fff4dd 0,transparent 45%),linear-gradient(155deg,#e3eff5 0%,#f1f3ee 48%,#c9e2e8 100%);background-attachment:fixed}
+.theme-coast .sidebar{background:#ffffff52;border-right:1px solid #ffffff9c;backdrop-filter:blur(15px)}
+.theme-coast .workspace{padding-top:36px}
+.theme-coast .hero-grid{position:relative;min-height:365px;grid-template-columns:minmax(0,1fr) 250px minmax(180px,.85fr);gap:30px}
+.theme-coast .intro h2{font-family:Georgia,"Songti SC","Noto Serif CJK SC",serif;font-weight:400;font-size:clamp(33px,3.4vw,49px)}
+.theme-coast .intro h2 em{font-style:normal;color:var(--accent)}
+.theme-coast .hourglass-stage::before{content:"";position:absolute;width:260px;height:260px;border-radius:50%;left:50%;top:8px;transform:translateX(-50%);background:radial-gradient(ellipse,#ffffffcb,transparent 70%);z-index:-1}
+.theme-coast .hourglass{filter:drop-shadow(0 20px 20px #4f879424)}
+.theme-coast .day-summary{background:#ffffff82;backdrop-filter:blur(10px);border-color:#ffffffa8}
+.theme-coast .bottle-section{background:linear-gradient(120deg,#ffffffbb,#ffffff66);border-color:#ffffffc9}
+.theme-coast .bottle-card.receiving{background:#d8eaf1aa}
+.theme-coast .ocean-card{min-height:152px;background:linear-gradient(100deg,#b9d9e3,#d7e9ee);border:1px solid #ffffffae}
+.theme-coast .wave{opacity:.35;background:radial-gradient(ellipse at 10% 175%,#65a6bd 45%,transparent 45.5%),radial-gradient(ellipse at 80% 200%,#81b9c9 50%,transparent 50.5%)}
+.theme-coast .timer-bar{background:#f4fbfbc9;border-color:#fff;border-radius:26px;box-shadow:0 15px 40px #16476220}
+.theme-coast .primary{background:linear-gradient(120deg,#2b859e,#226d8f)}
+.theme-coast .metric,.theme-coast .ocean-value{font-family:Georgia,"Songti SC",serif;font-weight:400}
+@media(max-width:1050px){.theme-coast .hero-grid{grid-template-columns:minmax(0,1fr) 230px}.theme-coast .day-summary{grid-column:1/-1}}
+@media(max-width:700px){.theme-coast .workspace{padding-top:20px}.theme-coast .hero-grid{grid-template-columns:1fr;gap:12px;min-height:0}.theme-coast .intro h2{font-size:29px}.theme-coast .intro p{font-size:11px;margin-top:8px}.theme-coast .intro p br{display:none}.theme-coast .hourglass{width:145px;height:207px}.theme-coast .day-summary{grid-column:auto;padding:14px;gap:10px 18px}.theme-coast .day-summary>small{display:none}.theme-coast .day-summary>div{display:flex;align-items:center;gap:14px}.theme-coast .day-summary .metric{font-size:26px}.theme-coast .day-summary progress{order:2}.theme-coast .day-summary dl{font-size:10px}.theme-coast .ocean-card{min-height:140px}.theme-coast .section-head h3{font-size:16px}}
