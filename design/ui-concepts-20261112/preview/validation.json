@@ -1,0 +1,14 @@
+{
+  "checks": 125,
+  "schemes": 5,
+  "viewports": [
+    1440,
+    1024,
+    844,
+    390,
+    320
+  ],
+  "browser": "Chromium via Playwright 1.56.1",
+  "errors": [],
+  "scope": "HTML preview only; not Flutter or device acceptance"
+}
