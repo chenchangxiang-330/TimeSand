@@ -10,6 +10,17 @@ button,input,select,textarea{font:inherit}button,a,input,select,textarea{-webkit
 .timer-bar>div,.record-row>div,.setting-row>div,.detail-grid>div{min-width:0;overflow-wrap:anywhere}
 .corner-fallback:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--accent)}
 
+/* Keep short Chinese controls legible, and balance headings. */
+.intro h2{text-wrap:balance}
+body[class^="theme-"] .bottle-grid{grid-auto-columns:minmax(164px,1fr)}
+body[class^="theme-"] .card-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding-inline:0}
+body[class^="theme-"] .card-controls button{min-width:0;padding:6px 2px;white-space:nowrap}
+progress{appearance:none;border:0;border-radius:6px;overflow:hidden;background:var(--soft)}
+progress::-webkit-progress-bar{background:var(--soft)}
+progress::-webkit-progress-value{background:var(--accent)}
+progress::-moz-progress-bar{background:var(--accent)}
+@media(max-width:700px){body[class^="theme-"] .bottle-grid{grid-auto-columns:164px}}
+
 /* B · 留白纸境 / Original TimeSand concept. No external assets. */
 body.theme-paper {
   --bg:#f4f0e7; --surface:#fffcf6; --ink:#302f29; --muted:#746e61;
@@ -172,6 +183,9 @@ dialog[open]{animation:arrive .24s cubic-bezier(.22,.8,.25,1)}@keyframes arrive{
 button{transition:background-color .18s,transform .18s}button:active{transform:scale(.975)}
 
 body[class^="theme-"] :is(.panel,.day-summary,.bottle-section,.ocean-card,.stat-card){border-radius:max(22px,var(--radius))}
+
+body[class^="theme-"] :is(.bottle-card,.timer-bar,.bottom-nav,dialog){border-radius:max(22px,var(--radius))}
+body[class^="theme-"] button{border-radius:14px}
 </style></head><body><script>window.TIMESAND_CONFIG={"id":"paper","code":"B","name":"留白纸境","headline":"每一刻，<br>都值得被记下。","eyebrow":"A JOURNAL OF YOUR HOURS","description":"米白纸面、墨色衬线与琥珀细节。用编辑式留白和细线组织时间，像一本有呼吸感的成长手账；玻璃与装饰更克制，适合长时间阅读与复盘。","reference":"借鉴滴答清单的清晰层级与时间线，结合块时间对时间区间的强调。"};</script><script>(function prototypeApp(){
 'use strict';
 const C=window.TIMESAND_CONFIG,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -211,7 +225,7 @@ function tick(){const s=dayStats();$('#dateLine').textContent=new Date().toLocal
 function go(p){page=p;particles=[];render();window.scrollTo({top:0,behavior:state.reduced?'instant':'smooth'});}
 function openModal(title,html,action,label='保存'){const m=$('#modal');m.innerHTML=`<form id="dialogForm"><h2>${title}</h2>${html}<div class="error" id="formError" role="alert"></div><div class="dialog-actions"><button type="button" data-act="close">取消</button>${action?`<button class="primary" type="submit">${label}</button>`:''}</div></form>`;submitAction=action;m.showModal();smoothCorners();}
 function confirmModal(title,text,action,label='确认'){openModal(title,`<p>${esc(text)}</p>`,()=>{action();},label);}
-function validate(es,bs){const ids=new Set(bs.map(b=>b.id));if(ids.size!==bs.length)throw Error('瓶子 ID 重复。');bs.forEach(b=>{if(!Number.isInteger(b.id)||!b.name?.trim()||!/^#[0-9a-f]{6}$/i.test(b.color))throw Error('瓶子格式不正确。');});let sorted=[...es].sort((a,b)=>a.start-b.start),seen=new Set();for(let i=0;i<sorted.length;i++){let e=sorted[i];if(seen.has(e.id)||!ids.has(e.bottleId)||!Number.isFinite(e.start)||e.start>Date.now()||(e.end!==null&&(!Number.isFinite(e.end)||e.end<=e.start||e.end>Date.now()))||!['active','manual'].includes(e.source))throw Error('记录格式、起止时间或瓶子引用不正确。');seen.add(e.id);if(i&&e.start<(sorted[i-1].end??Infinity))throw Error('时间记录发生重叠，请调整起止时间。');}}
+function validate(es,bs){const ids=new Set(bs.map(b=>b.id));if(ids.size!==bs.length)throw Error('瓶子 ID 重复。');bs.forEach(b=>{if(!Number.isInteger(b.id)||b.id<=0||!b.name?.trim()||!/^#[0-9a-f]{6}$/i.test(b.color))throw Error('瓶子格式不正确。');});let sorted=[...es].sort((a,b)=>a.start-b.start),seen=new Set();for(let i=0;i<sorted.length;i++){let e=sorted[i];if(!Number.isInteger(e.id)||e.id<=0||seen.has(e.id)||!ids.has(e.bottleId)||!Number.isFinite(e.start)||e.start>Date.now()||(e.end!==null&&(!Number.isFinite(e.end)||e.end<=e.start||e.end>Date.now()))||!['active','manual'].includes(e.source))throw Error('记录格式、起止时间或瓶子引用不正确。');seen.add(e.id);if(i&&e.start<(sorted[i-1].end??Infinity))throw Error('时间记录发生重叠，请调整起止时间。');}}
 const uid=()=>Math.max(Date.now(),...state.entries.map(e=>e.id),...state.bottles.map(b=>b.id))+1;
 function start(id){const b=bottle(id);if(!b||b.archived){openModal('选择时间之瓶',state.bottles.filter(b=>!b.archived).map(b=>`<button style="width:100%;margin:6px 0" type="button" data-act="choose-start" data-id="${b.id}">${esc(b.name)}</button>`).join('')||'<p>请先创建一只时间瓶。</p><button type="button" data-act="new-bottle">创建时间瓶</button>',null);return;}let current=active();if(current?.bottleId===id){toast('这只瓶子正在计时。');return;}const commit=()=>{let t=Date.now(),es=state.entries.map(e=>e.id===current?.id?{...e,end:t}:e);es.push({id:uid(),bottleId:id,start:t,end:null,source:'active'});validate(es,state.bottles);state.entries=es;state.selected=id;save();render();toast(current?'已结束上一段，开始新的投入。':'开始记录，时间正在流向 '+b.name);};if(current)confirmModal('切换正在投入的瓶子？',`将结束「${bottle(current.bottleId).name}」并开始「${b.name}」，已有时间会保留。`,commit,'结束并切换');else commit();}
 function bottleForm(id){let b=bottle(id);openModal(b?'管理时间瓶':'新建时间瓶',`<label>名称<input name="name" maxlength="60" required value="${esc(b?.name||'')}" placeholder="例如：认真阅读"></label><label>瓶子颜色<input name="color" type="color" value="${b?.color||'#508fab'}"></label>${b?'<button type="button" data-act="archive" data-id="'+b.id+'">归档此瓶子</button>':''}`,data=>{const name=data.get('name').trim();if(!name)throw Error('请填写瓶子名称。');if(b){b.name=name;b.color=data.get('color');}else{const n={id:uid(),name,color:data.get('color')};state.bottles.push(n);state.selected=n.id;}save();render();});}
