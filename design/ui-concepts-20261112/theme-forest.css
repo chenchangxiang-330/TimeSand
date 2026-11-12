@@ -69,7 +69,7 @@ body.theme-forest {
   padding:25px 25px 20px; box-shadow:var(--shadow);
 }
 .theme-forest .section-head { gap:16px; align-items:center; margin-bottom:22px; }
-.theme-forest .section-head h2 { font-size:24px; }
+.theme-forest .section-head :is(h2,h3) { font-size:24px; }
 .theme-forest .section-head p { color:var(--muted); font-size:12px; }
 .theme-forest .bottle-grid { gap:16px; }
 .theme-forest .bottle-card {
@@ -98,7 +98,7 @@ body.theme-forest {
 .theme-forest .record-row { border-bottom:1px solid #e0e8d9; padding:18px 6px; border-radius:0; background:transparent; }
 .theme-forest .stat-grid { gap:17px; }
 .theme-forest .stat-card { border:1px solid #d3e0ca; padding:24px; background:#fafff4; border-radius:25px; box-shadow:none; }
-.theme-forest .stat-card strong { color:#355e41; font-size:34px; font-weight:600; letter-spacing:-.04em; }
+.theme-forest .stat-card .metric { color:#355e41; font-size:34px; font-weight:600; letter-spacing:-.04em; }
 .theme-forest .month-chart { background:linear-gradient(0deg,#edf4e8,transparent); border-radius:20px; padding:16px; }
 .theme-forest .chart-bar { background:linear-gradient(#9cb980,#45754d); border-radius:9px 9px 2px 2px; }
 .theme-forest .setting-row { padding-block:18px; border-bottom:1px solid #dce7d4; }
@@ -139,12 +139,12 @@ body.theme-forest {
   .theme-forest .day-summary .metric { font-size:29px; }
   .theme-forest .bottle-section { padding:21px 17px 10px; border-radius:26px; }
   .theme-forest .section-head { align-items:flex-start; flex-wrap:wrap; margin-bottom:14px; }
-  .theme-forest .section-head h2 { font-size:22px; }
+  .theme-forest .section-head :is(h2,h3) { font-size:22px; }
   .theme-forest .bottle-grid { display:grid; grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:150px; overflow-x:auto; gap:13px; padding:5px 3px 15px; }
   .theme-forest .bottle-card { padding:19px 10px 12px; }
   .theme-forest .panel,.theme-forest .ocean-card { padding:21px; border-radius:24px; }
   .theme-forest .stat-card { padding:19px; border-radius:21px; }
-  .theme-forest .stat-card strong { font-size:29px; }
+  .theme-forest .stat-card .metric { font-size:29px; }
 }
 @media(max-width:360px) {
   .theme-forest .workspace { padding-inline:12px; }

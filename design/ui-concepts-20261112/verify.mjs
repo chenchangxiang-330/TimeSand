@@ -48,6 +48,7 @@ await page.locator('[data-act="new-bottle"]').first().click();
 await page.locator('input[name=name]').fill('这是一只用来检查长名称布局的阅读与个人成长时间瓶');
 await page.getByRole('button',{name:'保存',exact:true}).click();
 assert.equal(await page.locator('.bottle-card').count(),5);checks++;
+await page.locator('[data-act="new-bottle"]').first().click();await page.locator('input[name=name]').fill('W'.repeat(60));await page.getByRole('button',{name:'保存',exact:true}).click();checks++;
 for(const size of [{width:390,height:844},{width:320,height:740},{width:844,height:390},{width:1024,height:768}]){
 await page.setViewportSize(size);await page.waitForTimeout(150);
 assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),c.id+' overflow at '+size.width);checks++;

@@ -6,3 +6,6 @@ button,input,select,textarea{font:inherit}button,a,input,select,textarea{-webkit
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 .card-controls button,.record-actions button{min-height:44px}
+
+.timer-bar>div,.record-row>div,.setting-row>div,.detail-grid>div{min-width:0;overflow-wrap:anywhere}
+.corner-fallback:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--accent)}
