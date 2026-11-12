@@ -5,10 +5,10 @@ on:
     paths: ['design/ui-concepts-20261112/**', '.github/workflows/ui-concepts.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   preview:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
       run:
@@ -38,3 +38,17 @@ jobs:
           path: design/ui-concepts-20261112/dist
           if-no-files-found: error
           retention-days: 3
+
+      - name: Preserve generated HTML and actual screenshots on design branch
+        if: always()
+        run: |
+          if [ ! -d dist ]; then exit 0; fi
+          mkdir -p preview
+          cp -R dist/. preview/
+          git add preview
+          if ! git diff --cached --quiet; then
+            git config user.name "TimeSand design preview"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "design: preserve standalone previews and browser evidence"
+            git push origin HEAD:design/ui-concepts-20261112
+          fi
