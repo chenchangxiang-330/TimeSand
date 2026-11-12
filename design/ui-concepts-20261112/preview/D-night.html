@@ -213,7 +213,7 @@ body[class^="theme-"] :is(.panel,.day-summary,.bottle-section,.ocean-card,.stat-
 
 body[class^="theme-"] :is(.bottle-card,.timer-bar,.bottom-nav,dialog){border-radius:max(22px,var(--radius))}
 body[class^="theme-"] button{border-radius:14px}
-</style></head><body><script>window.TIMESAND_CONFIG={"id":"night","code":"D","name":"极夜星砂","headline":"收起喧嚣，<br>让这一刻发光。","eyebrow":"A CONSTELLATION OF MOMENTS","description":"深午夜蓝、暖白沙粒和环形舞台。中央沙漏与活动状态更突出，数据放在安静的侧列；适合夜间、专注时使用，保持足够文字对比。","reference":"借鉴番茄 ToDo 的单一计时焦点与小日常的深色方向，视觉为原创。"};</script><script>(function prototypeApp(){
+</style></head><body><script>window.TIMESAND_CONFIG={"id":"night","code":"D","name":"极夜星砂","headline":"收起喧嚣，<br>此刻发光。","eyebrow":"A CONSTELLATION OF MOMENTS","description":"深午夜蓝、暖白沙粒和环形舞台。中央沙漏与活动状态更突出，数据放在安静的侧列；适合夜间、专注时使用，保持足够文字对比。","reference":"借鉴番茄 ToDo 的单一计时焦点与小日常的深色方向，视觉为原创。"};</script><script>(function prototypeApp(){
 'use strict';
 const C=window.TIMESAND_CONFIG,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const key='timesand-ui-preview-v1-'+C.id,day=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()),next=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),local=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19),dateKey=d=>local(d).slice(0,10);
