@@ -11,6 +11,8 @@ const page=await context.newPage();page.on('pageerror',e=>errors.push(c.id+': '+
 const url='http://127.0.0.1:8765/'+c.code+'-'+c.id+'.html';
 await page.goto(url);await page.waitForSelector('.bottle-card');
 assert.equal(await page.locator('.bottle-card').count(),4);checks++;
+assert(await page.evaluate(()=>{let s=window.__preview.getState(),e=s.entries[0];try{window.__preview.validate([...s.entries,{...e,id:987654321}],s.bottles);return false}catch(error){return error.message.includes('重叠')}}));checks++;
+
 assert(await page.evaluate(()=>{let s=window.__preview.getState();try{window.__preview.validate([{bottleId:1,start:Date.now()-1000,end:Date.now(),source:'manual'}],s.bottles);return false}catch{return true}}));checks++;
 
 await page.screenshot({path:'dist/screenshots/'+c.id+'-desktop.jpg',type:'jpeg',quality:88});
