@@ -28,7 +28,7 @@ await page.locator('[data-page="history"]:visible').first().click();await page.l
 await page.waitForTimeout(120);assert(await page.locator('#recordList').textContent().then(t=>t.includes('等待被记录')));checks++;
 await page.locator('[data-act="clear-filter"]').click();
 await page.locator('[data-act="edit-entry"]').first().click();
-await page.locator('input[name=start]').fill('2099-01-01T10:00:00');await page.getByRole('button',{name:'保存',exact:true}).click();
+await page.locator('input[name=start]').fill('2099-01-01T10:00');await page.getByRole('button',{name:'保存',exact:true}).click();
 assert(await page.locator('#formError').textContent().then(Boolean));checks++;
 await page.locator('[data-act="close"]').click();
 let before=await page.evaluate(()=>window.__preview.getState().entries.length);
@@ -69,4 +69,7 @@ await context.close();console.log('PASS '+c.code+' '+c.name+' · navigation, CRU
 }
 assert.deepEqual(errors,[],'Browser JS errors');
 fs.writeFileSync('dist/validation.json',JSON.stringify({checks,schemes:5,viewports:[1440,1024,844,390,320],browser:'Chromium via Playwright 1.56.1',errors,scope:'HTML preview only; not Flutter or device acceptance'},null,2));
+const overview=await browser.newPage({viewport:{width:1440,height:1000}});
+await overview.goto('http://127.0.0.1:8765/index.html');await overview.locator('img').last().waitFor();
+await overview.locator('.grid').screenshot({path:'dist/screenshots/five-concepts-overview.jpg',type:'jpeg',quality:78});
 await browser.close();console.log('All '+checks+' assertions passed across 5 HTML schemes.');
