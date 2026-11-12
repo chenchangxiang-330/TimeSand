@@ -11,8 +11,11 @@ const page=await context.newPage();page.on('pageerror',e=>errors.push(c.id+': '+
 const url='http://127.0.0.1:8765/'+c.code+'-'+c.id+'.html';
 await page.goto(url);await page.waitForSelector('.bottle-card');
 assert.equal(await page.locator('.bottle-card').count(),4);checks++;
+assert(await page.evaluate(()=>{let s=window.__preview.getState();try{window.__preview.validate([{bottleId:1,start:Date.now()-1000,end:Date.now(),source:'manual'}],s.bottles);return false}catch{return true}}));checks++;
+
 await page.screenshot({path:'dist/screenshots/'+c.id+'-desktop.jpg',type:'jpeg',quality:88});
-await page.setViewportSize({width:390,height:844});await page.screenshot({path:'dist/screenshots/'+c.id+'-phone.png',fullPage:true});await page.setViewportSize({width:1440,height:1000});
+assert(await page.locator('#timerBar').evaluate(el=>{let r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1}),c.id+' desktop timer bar outside viewport');checks++;
+await page.setViewportSize({width:390,height:844});await page.screenshot({path:'dist/screenshots/'+c.id+'-phone.png'});await page.locator('.bottle-section').scrollIntoViewIfNeeded();await page.screenshot({path:'dist/screenshots/'+c.id+'-phone-bottles.png'});await page.evaluate(()=>window.scrollTo(0,0));await page.setViewportSize({width:1440,height:1000});
 await page.locator('[data-act="start"][data-id="1"]').click();await page.waitForTimeout(1150);
 assert.equal(await page.evaluate(()=>window.__preview.getState().entries.filter(e=>e.end===null).length),1);checks++;
 await page.reload();await page.waitForSelector('[data-act="stop"]');
@@ -53,6 +56,9 @@ await page.locator('[data-act="new-bottle"]').first().click();await page.locator
 for(const size of [{width:390,height:844},{width:320,height:740},{width:844,height:390},{width:1024,height:768}]){
 await page.setViewportSize(size);await page.waitForTimeout(150);
 assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),c.id+' overflow at '+size.width);checks++;
+assert(await page.locator('#timerBar').evaluate(el=>{let r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1}),c.id+' timer bar outside viewport '+size.width);checks++;
+assert(await page.locator('[data-page="history"]:visible').count()>0,c.id+' missing navigation '+size.width);checks++;
+
 }
 await page.setViewportSize({width:390,height:844});
 await page.screenshot({path:'dist/screenshots/'+c.id+'-stress-phone.png',fullPage:true});
