@@ -12,6 +12,7 @@ const url='http://127.0.0.1:8765/'+c.code+'-'+c.id+'.html';
 await page.goto(url);await page.waitForSelector('.bottle-card');
 assert.equal(await page.locator('.bottle-card').count(),4);checks++;
 await page.screenshot({path:'dist/screenshots/'+c.id+'-desktop.jpg',type:'jpeg',quality:88});
+await page.setViewportSize({width:390,height:844});await page.screenshot({path:'dist/screenshots/'+c.id+'-phone.png',fullPage:true});await page.setViewportSize({width:1440,height:1000});
 await page.locator('[data-act="start"][data-id="1"]').click();await page.waitForTimeout(1150);
 assert.equal(await page.evaluate(()=>window.__preview.getState().entries.filter(e=>e.end===null).length),1);checks++;
 await page.reload();await page.waitForSelector('[data-act="stop"]');
@@ -42,7 +43,7 @@ await page.locator('#reduceMotion').check();assert.equal(await page.evaluate(()=
 await page.locator('[data-act="export-json"]').click();
 await page.locator('[data-act="import"]').click();
 await page.locator('#importFile').setInputFiles({name:'broken.json',mimeType:'application/json',buffer:Buffer.from('{"broken":')});
-assert(await page.locator('#toast').textContent().then(t=>t.includes('导入拒绝')));checks++;
+await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('导入拒绝'));checks++;
 await page.locator('[data-page="home"]:visible').first().click();
 await page.locator('[data-act="new-bottle"]').first().click();
 await page.locator('input[name=name]').fill('这是一只用来检查长名称布局的阅读与个人成长时间瓶');
@@ -54,7 +55,8 @@ await page.setViewportSize(size);await page.waitForTimeout(150);
 assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),c.id+' overflow at '+size.width);checks++;
 }
 await page.setViewportSize({width:390,height:844});
-await page.screenshot({path:'dist/screenshots/'+c.id+'-phone.png',fullPage:true});
+await page.screenshot({path:'dist/screenshots/'+c.id+'-stress-phone.png',fullPage:true});
+await page.locator('[data-page="settings"]:visible').first().click();await page.locator('#reduceMotion').uncheck();await page.locator('[data-page="home"]:visible').first().click();
 await page.locator('[data-act="start"][data-id="1"]').click();await page.waitForTimeout(1600);
 await page.screenshot({path:'dist/screenshots/'+c.id+'-active-phone.png',fullPage:true});
 await page.locator('[data-act="stop"]').click();
